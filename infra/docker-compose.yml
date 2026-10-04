@@ -1,0 +1,22 @@
+version: "3.9"
+
+# Opcional: um MySQL local pra desenvolver sem mexer no banco de produção do
+# EasyPanel. Sobe só o banco — a API roda localmente (pnpm dev:api) apontando
+# pra cá. Em produção, use o MySQL do EasyPanel (ver docs/DEPLOY_EASYPANEL.md).
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: lavajato-app-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: lavajato_root_dev
+      MYSQL_DATABASE: lavajato_app
+      MYSQL_USER: lavajato
+      MYSQL_PASSWORD: lavajato_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - lavajato_mysql_data:/var/lib/mysql
+
+volumes:
+  lavajato_mysql_data:

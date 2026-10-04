@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Lava Jato One",
+    "slug": "lavajato-one",
+    "scheme": "lavajatoone",
+    "version": "0.1.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.divisionstech.lavajatoone",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A1620"
+      },
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "_comment": "Rode `eas init` neste projeto para gerar o projectId do Expo (necessário para notificações push e atualizações OTA). Não reutilize o projectId do BarberOne."
+      }
+    }
+  }
+}

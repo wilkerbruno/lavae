@@ -1,0 +1,64 @@
+# Build context: a RAIZ do monorepo (mesmo motivo do apps/api/Dockerfile e do
+# apps/admin-web/Dockerfile — a versão web do app depende do pacote
+# packages/shared via pnpm workspace). No EasyPanel, ao criar o serviço da
+# versão web:
+#   - Build method: Dockerfile
+#   - Build context / Root directory: a raiz do repositório (não apps/mobile)
+#   - Dockerfile path: apps/mobile/Dockerfile.web
+#
+# Esse Dockerfile é só pra versão WEB (Expo Web/react-native-web) — o app
+# Android/iOS de verdade continua sendo gerado à parte, via EAS (ver
+# build-apk.sh na raiz do repo), nunca por aqui. Ver comentário em
+# RootNavigator.tsx: essa versão web só atende contas de CLIENTE (agendar/
+# pagar) — dono/funcionário continuam usando o app instalado.
+FROM node:22-slim
+RUN corepack enable
+WORKDIR /repo
+
+# Copia o repo inteiro (o .dockerignore na raiz evita node_modules/dist/etc
+# do seu computador vazando pra dentro da imagem).
+COPY . .
+
+# Instala só o necessário pro app mobile (não puxa NestJS/Next do resto do
+# monorepo).
+RUN pnpm install --frozen-lockfile --filter "@lavajato-app/mobile..."
+
+# packages/shared/package.json aponta "main" pra "dist/index.js" — precisa
+# existir de verdade antes do `expo export` abaixo (mesmo motivo/comentário
+# completo no apps/api/Dockerfile e no apps/admin-web/Dockerfile).
+RUN pnpm --filter @lavajato-app/mobile exec tsc -p ../../packages/shared/tsconfig.json
+
+# IMPORTANTE: assim como o NEXT_PUBLIC_API_URL do admin-web, qualquer
+# variável EXPO_PUBLIC_* (ver src/api/client.ts) é gravada DIRETO no
+# JavaScript que vai pro navegador NO MOMENTO DO BUILD, não em runtime — se
+# trocar a URL da API depois, precisa gerar uma imagem nova (rebuild), não só
+# reiniciar o container.
+#
+# No EasyPanel: defina EXPO_PUBLIC_API_URL nas "Build variables" do serviço
+# (não só nas "Environment variables" de runtime), com a URL PÚBLICA da API
+# (ex.: https://sua-api.dominio.com/api) — nunca localhost, já que quem
+# executa esse JavaScript é o navegador do cliente, não esse container.
+ARG EXPO_PUBLIC_API_URL
+ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
+
+# Gera o build estático em apps/mobile/dist (HTML/JS/CSS/imagens prontos —
+# nenhum código do projeto roda em runtime a partir daqui pra frente, só um
+# servidor de arquivos estáticos, ver CMD no final).
+RUN pnpm --filter @lavajato-app/mobile run build:web
+
+# Trava o build cedo (com mensagem clara) se um dia o `expo export` parar de
+# gerar a pasta esperada, em vez de só descobrir em produção que não tem o
+# que servir.
+RUN test -f /repo/apps/mobile/dist/index.html || (echo "ERRO: apps/mobile/dist não foi gerado" && exit 1)
+
+WORKDIR /repo/apps/mobile
+ENV NODE_ENV=production
+EXPOSE 3002
+
+# "serve" (devDependency, ver package.json) é um servidor estático mínimo —
+# só entrega os arquivos já prontos gerados pelo `expo export` acima, sem
+# rodar nenhum código do projeto em runtime. "-s" (single-page app)
+# redireciona qualquer rota desconhecida pro index.html, necessário porque o
+# React Navigation decide as telas no JavaScript do navegador, não em rotas
+# de verdade no servidor.
+CMD ["npx", "serve", "-s", "dist", "-l", "3002"]

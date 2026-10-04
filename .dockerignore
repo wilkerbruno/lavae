@@ -1,0 +1,26 @@
+# Usado por TODOS os Dockerfiles do monorepo (apps/api, apps/admin-web) — o
+# build context de ambos é a raiz do repositório. Sem isso, o `COPY . .` de
+# cada Dockerfile copiaria o node_modules instalado na SUA máquina pra dentro
+# da imagem (potencialmente com binários nativos de outro SO/arquitetura,
+# como o "engine" do Prisma) por cima do que o `pnpm install` do próprio
+# Dockerfile acabou de instalar — na melhor das hipóteses, desperdiça cache de
+# build; na pior, quebra em produção de um jeito difícil de reproduzir local.
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+.expo/
+**/.expo/
+.git/
+.turbo/
+**/*.tsbuildinfo
+coverage/
+*.log
+.env
+.env.local
+.DS_Store
+prisma/*.db

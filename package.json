@@ -1,0 +1,20 @@
+{
+  "name": "lavajato-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SaaS de gestão para lavaJatos: agenda, financeiro, catálogo de serviços/pacotes e cobrança de mensalidade dos lava jatos assinantes.",
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shared": "pnpm --filter @lavajato-app/api exec tsc -p ../../packages/shared/tsconfig.json",
+    "dev:api": "pnpm --filter @lavajato-app/api start:dev",
+    "dev:mobile": "pnpm --filter @lavajato-app/mobile start",
+    "dev:admin": "pnpm --filter @lavajato-app/admin-web dev",
+    "build": "pnpm run build:shared && pnpm -r build",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down"
+  }
+}

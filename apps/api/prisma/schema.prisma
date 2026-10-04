@@ -1,0 +1,842 @@
+// Schema do banco de dados. Rode `pnpm --filter @lavajato-app/api prisma:migrate`
+// depois de configurar DATABASE_URL (veja .env.example) para criar as tabelas.
+//
+// Banco: MySQL (ex: o serviço de MySQL do EasyPanel). Ver docs/DEPLOY_EASYPANEL.md
+// para como conectar com segurança (rede interna, usuário com privilégio mínimo).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  CLIENTE
+  FUNCIONARIO
+  LAVAJATO_ADMIN
+  SAAS_ADMIN
+}
+
+// Porte do veículo — define o preço e a duração de cada serviço (ver
+// precoParaPorte/duracaoParaPorte no pacote compartilhado). Os valores
+// cadastrados em Servico/Pacote/PacoteMensal são os do porte HATCH; os demais
+// portes aplicam os percentuais de LavaJato.ajustePrecoPorte/ajusteDuracaoPorte.
+enum PorteVeiculo {
+  MOTO
+  HATCH
+  SEDAN
+  SUV
+  PICKUP
+}
+
+enum StatusAgendamento {
+  PENDENTE
+  CONFIRMADO
+  CONCLUIDO
+  CANCELADO
+  // Cliente não apareceu no horário marcado (ver AgendamentosService.marcarNaoCompareceu).
+  // Diferente de CANCELADO: gera a multa de 50% (valorMultaCentavos) e entra
+  // no faturamento do Financeiro; CANCELADO não cobra nada.
+  NAO_COMPARECEU
+}
+
+// De onde veio o agendamento: pelo cliente no app (com pagamento) ou lançado
+// manualmente pelo próprio lava jato na agenda dela (atendimento presencial,
+// sem cobrança pelo app).
+enum OrigemAgendamento {
+  CLIENTE_APP
+  LAVAJATO_MANUAL
+}
+
+enum MetodoPagamento {
+  PIX
+  CARTAO
+  // Dinheiro na mão: tanto em Agendamento.metodoPagamentoManual (lançamento
+  // manual do lava jato, sem Pagamento nenhum) quanto num Pagamento de
+  // verdade (agendamento feito pelo cliente no app escolhendo pagar em
+  // dinheiro) — nesse segundo caso o Pagamento nasce PENDENTE e só vira
+  // APROVADO quando o funcionário/lavajato confirmam o recebimento
+  // presencial (ver AgendamentosService.confirmarPagamentoDinheiro). Nunca
+  // passa pelo Mercado Pago em nenhum dos dois casos.
+  DINHEIRO
+}
+
+// Espelha (de forma simplificada) o status de pagamento do Mercado Pago.
+// Ver MercadoPagoService/PagamentosService para o mapeamento exato.
+enum StatusPagamento {
+  PENDENTE
+  APROVADO
+  RECUSADO
+  ESTORNADO
+  PARCIALMENTE_ESTORNADO
+}
+
+enum StatusAssinaturaPacote {
+  PENDENTE // cliente ainda não autorizou a cobrança recorrente no Mercado Pago
+  ATIVA
+  INADIMPLENTE
+  CANCELADA
+}
+
+enum StatusAssinatura {
+  TRIAL
+  ATIVA
+  INADIMPLENTE
+  CANCELADA
+}
+
+enum StatusFatura {
+  PAGA
+  PENDENTE
+  ATRASADA
+}
+
+// Periodicidade escolhida pelo dono do lava jato pra pagar a mensalidade do
+// SaaS — ver PagamentoAssinatura/AssinaturasService. ANUAL cobre 12 meses de
+// uma vez só, com o desconto configurado em Plano.descontoAnualTipo/Valor.
+enum PeriodicidadeAssinatura {
+  MENSAL
+  ANUAL
+}
+
+// Como o desconto do plano anual é calculado a partir do preço mensal — ver
+// Plano.descontoAnualTipo/descontoAnualValor e calcularPrecoAnualCentavos
+// (pacote compartilhado).
+enum TipoDesconto {
+  PERCENTUAL // descontoAnualValor = pontos percentuais (0-100)
+  VALOR_FIXO // descontoAnualValor = centavos abatidos do total anual (12x o mensal)
+}
+
+// ============================= TENANT =============================
+
+model LavaJato {
+  id        String   @id @default(uuid())
+  nome      String
+  slug      String   @unique
+  // Endereço do estabelecimento, em campos separados (preenchidos no app a
+  // partir do CEP, via ViaCEP) + `endereco`, o texto já formatado pronto pra
+  // exibir — é o que o resto do código (telas do cliente, painel SaaS) já lia
+  // como string única antes de virar campos separados. É público (o cliente
+  // final vê o endereço do lava jato pra saber pra onde ir).
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  uf          String?
+  endereco  String?
+  telefone  String?
+  // Logo do lava jato enviada pelo dono (Mais > Logo, ou no cadastro). Guardada
+  // como data URL (base64) direto no banco — já vem redimensionada/comprimida
+  // pela API (ver LavaJatosService.atualizarLogo) então fica pequena o
+  // suficiente pra isso, e evita depender de um serviço de storage externo
+  // (S3 etc.) que o projeto ainda não tem configurado.
+  logoUrl   String?  @db.LongText
+  // Percentual (100 = preço/duração do HATCH) por porte de veículo, como JSON:
+  // {"MOTO":70,"HATCH":100,"SEDAN":115,"SUV":135,"PICKUP":160}. Null = padrão
+  // (AJUSTE_PRECO_PORTE_PADRAO / AJUSTE_DURACAO_PORTE_PADRAO no pacote shared).
+  // Editável pelo dono em Mais > Preço por porte.
+  ajustePrecoPorte   Json?
+  ajusteDuracaoPorte Json?
+  // Coordenadas usadas na busca "lava jatos próximas" do app do cliente.
+  // Preenchidas pelo dono em "Mais > Localização" (captura o GPS do celular dele).
+  latitude  Float?
+  longitude Float?
+  // Cache da avaliação média (1 a 5) e da quantidade de avaliações, recalculado
+  // toda vez que um cliente avalia (ver AvaliacoesService/LavaJatosService).
+  // Evita ter que agregar a tabela Avaliacao a cada listagem.
+  notaMedia       Float @default(0)
+  totalAvaliacoes Int   @default(0)
+  criadoEm  DateTime @default(now())
+
+  // Conta Mercado Pago da PRÓPRIA lava jato (modelo marketplace/Connect): o
+  // cliente paga o serviço direto nessa conta, não na conta da Divisions
+  // Tech. Preenchido pelo fluxo de OAuth em LavaJatosMercadoPagoService —
+  // ver apps/api/.env.example (MERCADOPAGO_CLIENT_ID/SECRET) para como isso
+  // é configurado a nível de plataforma. accessToken/refreshToken nunca são
+  // expostos pela API (sempre selecionados explicitamente, nunca por um
+  // `include` genérico) — ver comentário em LavaJatosMercadoPagoService.
+  mercadoPagoAccessToken  String?  @db.Text
+  mercadoPagoRefreshToken String?  @db.Text
+  mercadoPagoUserId       String?
+  mercadoPagoPublicKey    String?
+  mercadoPagoTokenExpiraEm DateTime?
+  mercadoPagoConectadoEm  DateTime?
+
+  usuarios     Usuario[]
+  funcionarios Funcionario[]
+  servicos     Servico[]
+  pacotes      Pacote[]
+  pacotesMensais PacoteMensal[]
+  agendamentos Agendamento[]
+  assinatura   Assinatura?
+  avaliacoes   Avaliacao[]
+  pagamentos   Pagamento[]
+  assinaturasPacote AssinaturaPacoteCliente[]
+  cartoesSalvos CartaoSalvo[]
+  clientesMercadoPago ClienteMercadoPagoCustomer[]
+  // Cartão salvo pra PAGAR A PRÓPRIA MENSALIDADE do SaaS (dono pagando a
+  // Divisions Tech) — não confundir com cartoesSalvos acima (cliente final
+  // pagando ESSA lava jato). Ver CartaoSalvoAssinatura/LavaJatoMercadoPagoCustomer.
+  cartoesSalvosAssinatura CartaoSalvoAssinatura[]
+  mercadoPagoCustomerAssinatura LavaJatoMercadoPagoCustomer?
+}
+
+// ============================= USUÁRIOS =============================
+
+model Usuario {
+  id           String    @id @default(uuid())
+  nome         String
+  email        String    @unique
+  senhaHash    String
+  telefone     String?
+  // Endereço completo, em campos separados (CEP + logradouro/número/bairro/
+  // cidade/UF — preenchidos no app a partir do CEP via ViaCEP) + `endereco`,
+  // o texto já formatado (ver EnderecoDto/EnderecoUtil na API). Obrigatório
+  // no cadastro de CLIENTE (RegisterClienteDto) e de FUNCIONARIO
+  // (CreateFuncionarioDto); nullable aqui só pra não quebrar usuários criados
+  // antes dessas colunas existirem, e porque LAVAJATO_ADMIN/SAAS_ADMIN não
+  // preenchem esses campos (o endereço que importa pro dono é o da própria
+  // LavaJato, acima).
+  // ATENÇÃO (privacidade): o endereço do CLIENTE nunca pode ser devolvido
+  // pela API pra LAVAJATO_ADMIN/FUNCIONARIO, e o endereço do FUNCIONARIO
+  // nunca pode ser devolvido pra CLIENTE nem (apesar de ele ter cadastrado)
+  // reexposto depois pro LAVAJATO_ADMIN — só SELECT_SEGURO (usuarios.service.ts,
+  // usado só em "meu-perfil", sempre o próprio usuário) inclui esses campos.
+  // Nunca adicione `cep`/`logradouro`/`numero`/`complemento`/`bairro`/`cidade`/
+  // `uf`/`endereco` nos selects de FuncionariosService nem em qualquer select
+  // de `cliente`/`usuario` feito a partir de Agendamento, Avaliacao,
+  // Funcionario etc.
+  cep          String?
+  logradouro   String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  cidade       String?
+  uf           String?
+  endereco     String?
+  papel        Papel
+  lavaJatoId  String?
+  lavaJato    LavaJato? @relation(fields: [lavaJatoId], references: [id])
+  criadoEm     DateTime  @default(now())
+
+  // Token de push do Expo (celular atual) — sobrescrito a cada novo login/
+  // registro (um usuário só recebe push no último aparelho em que entrou).
+  // Usado hoje só pro aviso de assinatura vencendo (ver
+  // AssinaturasService.verificarAvisosDeVencimento e PushService) — null
+  // enquanto o usuário nunca autorizou notificações ou nunca logou depois
+  // dessa feature existir.
+  pushToken    String?
+
+  // Preenchido apenas quando papel = FUNCIONARIO
+  funcionario  Funcionario?
+
+  // Agendamentos feitos por este usuário quando papel = CLIENTE
+  agendamentosComoCliente Agendamento[] @relation("AgendamentosCliente")
+
+  // Avaliações (estrelas) feitas por este usuário quando papel = CLIENTE
+  avaliacoes Avaliacao[]
+
+  // Pagamentos feitos por este usuário quando papel = CLIENTE (de agendamentos
+  // avulsos ou de mensalidades de pacote).
+  pagamentos Pagamento[]
+  assinaturasPacote AssinaturaPacoteCliente[]
+
+  // Veículos cadastrados pelo cliente (placa, modelo, porte) — usados pra
+  // agendar e pra precificar. Nunca devolvidos pra equipe do lava jato além
+  // do "retrato" guardado em cada Agendamento (placa/descrição).
+  veiculos Veiculo[]
+
+  // Cartões salvos pelo cliente (por lava jato — ver CartaoSalvo) e o
+  // vínculo com o "customer" do Mercado Pago de cada lava jato em que ele
+  // salvou algum cartão (ver ClienteMercadoPagoCustomer).
+  cartoesSalvos CartaoSalvo[]
+  clientesMercadoPago ClienteMercadoPagoCustomer[]
+
+  @@index([lavaJatoId])
+}
+
+// Veículo de um cliente. A placa é única por cliente (o mesmo carro pode ser
+// cadastrado por donos diferentes, ex: venda do veículo).
+model Veiculo {
+  id        String        @id @default(uuid())
+  clienteId String
+  cliente   Usuario       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  placa     String
+  marca     String?
+  modelo    String
+  cor       String?
+  porte     PorteVeiculo  @default(HATCH)
+  criadoEm  DateTime      @default(now())
+
+  agendamentos      Agendamento[]
+  assinaturasPacote AssinaturaPacoteCliente[]
+
+  @@unique([clienteId, placa])
+  @@index([clienteId])
+}
+
+// Vínculo entre um cliente (Usuario papel=CLIENTE) e o "customer" que ele tem
+// na conta Mercado Pago de UMA lava jato específica — necessário porque cada
+// lava jato tem sua própria conta MP conectada (modelo marketplace, ver
+// LavaJato.mercadoPagoAccessToken), então o mesmo cliente tem um customer_id
+// diferente em cada lava jato onde salvou um cartão. Criado sob demanda na
+// primeira vez que o cliente marca "salvar este cartão" (ver
+// CartoesService.obterOuCriarCustomer) — nunca é apagado junto com os
+// cartões, pra não precisar recriar o customer no Mercado Pago toda vez.
+model ClienteMercadoPagoCustomer {
+  id                    String   @id @default(uuid())
+  clienteId             String
+  cliente               Usuario  @relation(fields: [clienteId], references: [id])
+  lavaJatoId           String
+  lavaJato             LavaJato @relation(fields: [lavaJatoId], references: [id])
+  mercadoPagoCustomerId String
+  criadoEm              DateTime @default(now())
+
+  @@unique([clienteId, lavaJatoId])
+}
+
+// Um cartão que o cliente escolheu salvar pra usar em pagamentos futuros
+// nesse lava jato (ver CartoesService/CartaoScreen no mobile). Guardamos só
+// dados NÃO sensíveis devolvidos pelo Mercado Pago na hora de salvar — nunca
+// o número completo, nunca o CVV (aliás o CVV é pedido de novo a cada
+// pagamento, mesmo com cartão salvo, e tokenizado direto no app: ver
+// tela de pagamento). `ultimosDigitos` guarda os 4 dígitos finais que o MP
+// devolve; a tela mostra só os 3 últimos, por pedido do dono do produto.
+model CartaoSalvo {
+  id                    String   @id @default(uuid())
+  clienteId             String
+  cliente               Usuario  @relation(fields: [clienteId], references: [id])
+  lavaJatoId           String
+  lavaJato             LavaJato @relation(fields: [lavaJatoId], references: [id])
+
+  // IDs do próprio Mercado Pago — precisos pra gerar um token de cobrança
+  // novo a cada pagamento (POST /v1/card_tokens com card_id+customer_id) e
+  // pra remover o cartão lá quando o cliente exclui (DELETE .../cards/:id).
+  mercadoPagoCustomerId String
+  mercadoPagoCardId     String   @unique
+
+  bandeira       String  // payment_method.id do MP, ex: "visa", "master"
+  ultimosDigitos String  // last_four_digits devolvido pelo MP
+  nomeTitular    String
+  banco          String? // issuer.name do MP — nem sempre disponível
+
+  // 6 primeiros dígitos do cartão (BIN), enviados pelo próprio app no momento
+  // de salvar (o mesmo dado que já ia em `cartaoBin` no pagamento avulso, ver
+  // AgendamentosService) — guardado aqui pra poder identificar a bandeira de
+  // novo (MercadoPagoService.identificarBandeiraCartao) quando o cliente usa
+  // esse cartão salvo num pagamento futuro, sem depender de o Mercado Pago
+  // devolver esse dado de novo na hora de tokenizar via card_id.
+  bin String
+
+  criadoEm DateTime @default(now())
+
+  @@index([clienteId, lavaJatoId])
+}
+
+// Equivalente a ClienteMercadoPagoCustomer, mas pro OUTRO fluxo de dinheiro
+// (ver cabeçalho de MercadoPagoService): o customer aqui vive na conta da
+// PLATAFORMA (Divisions Tech), um por lava jato — usado só pra ela pagar a
+// própria mensalidade do SaaS com um cartão salvo (ver CartaoSalvoAssinatura,
+// AssinaturasCartoesService).
+model LavaJatoMercadoPagoCustomer {
+  id                    String    @id @default(uuid())
+  lavaJatoId           String    @unique
+  lavaJato             LavaJato @relation(fields: [lavaJatoId], references: [id])
+  mercadoPagoCustomerId String
+  criadoEm              DateTime  @default(now())
+}
+
+// Equivalente a CartaoSalvo, mas pro dono do lava jato pagar a PRÓPRIA
+// mensalidade do SaaS (conta da plataforma, não a do lava jato) — ver
+// LavaJatoMercadoPagoCustomer acima e AssinaturasCartoesService/tela de
+// Assinatura no mobile.
+model CartaoSalvoAssinatura {
+  id                    String   @id @default(uuid())
+  lavaJatoId           String
+  lavaJato             LavaJato @relation(fields: [lavaJatoId], references: [id])
+
+  mercadoPagoCustomerId String
+  mercadoPagoCardId     String   @unique
+
+  bandeira       String
+  ultimosDigitos String
+  nomeTitular    String
+  banco          String?
+  bin            String
+
+  criadoEm DateTime @default(now())
+
+  @@index([lavaJatoId])
+}
+
+// Dados específicos de quem trabalha no lava jato (papel = FUNCIONARIO).
+// Fica separado de Usuario para guardar comissão, horário de trabalho etc.
+model Funcionario {
+  id                  String   @id @default(uuid())
+  usuarioId           String   @unique
+  usuario             Usuario  @relation(fields: [usuarioId], references: [id])
+  lavaJatoId         String
+  lavaJato           LavaJato @relation(fields: [lavaJatoId], references: [id])
+  cargo               String   @default("Lavador")
+  comissaoPercentual  Int      @default(60) // % do valor do serviço que fica com o funcionário
+  disponivel          Boolean  @default(true)
+  ativo               Boolean  @default(true)
+
+  agendamentos Agendamento[] @relation("AgendamentosFuncionario")
+  horarios     HorarioTrabalho[]
+  folgas       Folga[]
+
+  @@index([lavaJatoId])
+}
+
+// Horário de trabalho semanal do funcionário: no máximo 1 linha por dia da
+// semana (diaSemana 0=domingo ... 6=sábado, igual ao Date.getDay() do JS).
+// A ausência de uma linha pra um dia significa que ele não trabalha nesse dia.
+// horaInicio/horaFim/inicioAlmoco/fimAlmoco ficam como texto "HH:mm" — mais
+// simples que lidar com fuso horário num tipo Time/DateTime pra algo que é só
+// "que horas do relógio local ele começa/para".
+model HorarioTrabalho {
+  id            String      @id @default(uuid())
+  funcionarioId String
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+  diaSemana     Int
+  horaInicio    String
+  horaFim       String
+  inicioAlmoco  String?
+  fimAlmoco     String?
+
+  @@unique([funcionarioId, diaSemana])
+}
+
+// Bloqueio pontual de agenda (folga, consulta, férias, etc) — além do
+// horário de trabalho semanal normal. Qualquer agendamento que caia dentro
+// de [inicio, fim) é bloqueado pro cálculo de horários disponíveis.
+model Folga {
+  id            String      @id @default(uuid())
+  funcionarioId String
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+  inicio        DateTime
+  fim           DateTime
+  motivo        String?
+  criadoEm      DateTime    @default(now())
+
+  @@index([funcionarioId, inicio])
+}
+
+// ============================= CATÁLOGO: SERVIÇOS E PACOTES =============================
+
+model Servico {
+  id              String   @id @default(uuid())
+  lavaJatoId     String
+  lavaJato       LavaJato @relation(fields: [lavaJatoId], references: [id])
+  nome            String
+  descricao       String?  @db.Text
+  duracaoMinutos  Int      @default(30)
+  precoCentavos   Int
+  ativo           Boolean  @default(true)
+
+  agendamentos      Agendamento[]
+  pacotesQueIncluem PacoteServico[]
+  pacotesMensaisQueIncluem PacoteMensalServico[]
+
+  @@index([lavaJatoId])
+}
+
+model Pacote {
+  id             String   @id @default(uuid())
+  lavaJatoId    String
+  lavaJato      LavaJato @relation(fields: [lavaJatoId], references: [id])
+  nome           String
+  descricao      String?  @db.Text
+  precoCentavos  Int
+  ativo          Boolean  @default(true)
+
+  servicos     PacoteServico[]
+  agendamentos Agendamento[]
+
+  @@index([lavaJatoId])
+}
+
+// Relação N:N entre Pacote e Servico (um pacote agrupa vários serviços).
+model PacoteServico {
+  pacoteId  String
+  pacote    Pacote  @relation(fields: [pacoteId], references: [id], onDelete: Cascade)
+  servicoId String
+  servico   Servico @relation(fields: [servicoId], references: [id])
+
+  @@id([pacoteId, servicoId])
+}
+
+// ============================= AGENDAMENTOS =============================
+
+model Agendamento {
+  id            String            @id @default(uuid())
+  lavaJatoId   String
+  lavaJato     LavaJato         @relation(fields: [lavaJatoId], references: [id])
+  // Opcional: um agendamento lançado manualmente pelo lava jato (ver
+  // OrigemAgendamento) pode ser de um cliente avulso, sem conta no app —
+  // nesse caso clienteId fica nulo e clienteAvulsoNome/Telefone são usados.
+  clienteId     String?
+  cliente       Usuario?          @relation("AgendamentosCliente", fields: [clienteId], references: [id])
+  clienteAvulsoNome     String?
+  clienteAvulsoTelefone String?
+  // Veículo atendido. `porte` é sempre preenchido (define preço e duração);
+  // `veiculoId` só existe quando o cliente agendou pelo app com um veículo
+  // cadastrado. Placa/descrição são um retrato do momento (o lançamento manual
+  // de cliente avulso não tem Veiculo cadastrado) — e é o que a agenda do lava
+  // jato exibe, sem precisar ler o cadastro do cliente.
+  porte             PorteVeiculo @default(HATCH)
+  veiculoId         String?
+  veiculo           Veiculo?     @relation(fields: [veiculoId], references: [id], onDelete: SetNull)
+  veiculoPlaca      String?
+  veiculoDescricao  String?
+  funcionarioId String
+  funcionario   Funcionario       @relation("AgendamentosFuncionario", fields: [funcionarioId], references: [id])
+  servicoId     String?
+  servico       Servico?          @relation(fields: [servicoId], references: [id])
+  pacoteId      String?
+  pacote        Pacote?           @relation(fields: [pacoteId], references: [id])
+  inicio        DateTime
+  fim           DateTime
+  precoCentavos Int
+  status        StatusAgendamento @default(CONFIRMADO)
+  origem        OrigemAgendamento @default(CLIENTE_APP)
+  criadoEm      DateTime          @default(now())
+  // Agrupa vários serviços marcados juntos no mesmo "carrinho" (ex: lavagem +
+  // cera, ou dois carros no mesmo horário) — cada serviço continua sendo uma
+  // linha própria (com sua duração/preço/horário sequencial), só a exibição e
+  // o cancelamento tratam o grupo como um agendamento só (ver AgendamentosService).
+  grupoId       String?
+
+  // Preenchido quando o cliente usou a cota do pacote mensal pra esse
+  // horário em vez de pagar avulso (ver PacotesMensaisService) — nesse caso
+  // não existe Pagamento vinculado a este agendamento.
+  assinaturaPacoteId String?
+  assinaturaPacote   AssinaturaPacoteCliente? @relation(fields: [assinaturaPacoteId], references: [id])
+
+  // Preenchido só quando status = NAO_COMPARECEU: os 50% retidos como multa
+  // (o resto é estornado ao cliente — ver AgendamentosService.marcarNaoCompareceu).
+  // Contabilizado pelo Financeiro junto com os CONCLUIDO.
+  valorMultaCentavos Int?
+
+  // Só preenchido quando origem = LAVAJATO_MANUAL: como o lava jato recebeu
+  // por fora (dinheiro na mão, Pix fora do app, cartão na maquininha própria)
+  // — não existe Pagamento aqui porque não passou pelo Mercado Pago da
+  // integração. É o que o FinanceiroService usa pra separar os 3 cards
+  // (Pix/Cartão/Dinheiro) junto com o metodo do Pagamento real dos
+  // agendamentos vindos do app (origem = CLIENTE_APP). Default DINHEIRO pra
+  // não deixar nulo um lançamento manual (ver AgendamentosService.criarManual).
+  metodoPagamentoManual MetodoPagamento?
+
+  @@index([lavaJatoId, inicio])
+  @@index([funcionarioId, inicio])
+  @@index([clienteId])
+  @@index([grupoId])
+  @@index([assinaturaPacoteId])
+}
+
+// ============================= PAGAMENTOS DO CLIENTE =============================
+
+// Cobrança de um cliente pro lava jato por UM agendamento avulso (não
+// vinculado a pacote mensal) — Pix ou Cartão, sempre na conta Mercado Pago da
+// próprio lava jato (ver LavaJato.mercadoPagoAccessToken). Assinaturas de
+// pacote mensal usam AssinaturaPacoteCliente/preapproval, não este model.
+model Pagamento {
+  id            String   @id @default(uuid())
+  // Uma cobrança cobre TODOS os agendamentos de um mesmo lote (ex: lavagem +
+  // cera marcados juntos) — por isso a ligação é pelo grupoId compartilhado
+  // (ver Agendamento.grupoId), consultado na aplicação (não como relação do
+  // Prisma, já que grupoId não é único por Pagamento). Todo agendamento vindo
+  // do cliente (origem=CLIENTE_APP) sempre tem um grupoId, mesmo quando é um
+  // item só (ver AgendamentosService.criarLote).
+  grupoId       String?
+  clienteId     String
+  cliente       Usuario  @relation(fields: [clienteId], references: [id])
+  lavaJatoId   String
+  lavaJato     LavaJato @relation(fields: [lavaJatoId], references: [id])
+  metodo        MetodoPagamento
+  status        StatusPagamento @default(PENDENTE)
+  valorCentavos Int
+  valorEstornadoCentavos Int @default(0)
+  // id do pagamento no Mercado Pago (para Pix: o /v1/payments criado; para
+  // Cartão via Checkout Pro: o payment aprovado associado à preference).
+  gatewayPagamentoId String?
+  gatewayPreferenceId String?
+  // Pix: QR code pra exibir (imagem base64) e o "copia e cola" (texto).
+  pixQrCodeBase64 String? @db.LongText
+  pixCopiaECola   String? @db.Text
+  // URL do desafio 3DS do Mercado Pago (ver MercadoPagoService.criarPagamentoCartao)
+  // — só fica preenchida enquanto o pagamento está PENDENTE aguardando o
+  // titular confirmar com o próprio banco; o app abre isso numa WebView.
+  desafio3dsUrl String? @db.Text
+  // Taxa que o próprio Mercado Pago descontou dessa cobrança (fee_details da
+  // Payment/Order API) — o lava jato recebe o valorCentavos menos isso. Fica
+  // 0 enquanto ainda não aprovou (só vem preenchido num pagamento já
+  // processado). Ver MercadoPagoService.buscarPayment/buscarOrderComoPayment.
+  taxaMercadoPagoCentavos Int @default(0)
+  // Preenchido em vez de grupoId quando essa cobrança é de UM período (1 mês)
+  // de uma assinatura de pacote mensal do cliente, cobrado avulso (Pix, ou
+  // Cartão sem renovação automática — ver PacotesMensaisService.assinar).
+  // Nunca preenchido junto com grupoId (são cobranças de origens diferentes:
+  // agendamento vs assinatura de pacote).
+  assinaturaPacoteClienteId String?
+  assinaturaPacoteCliente   AssinaturaPacoteCliente? @relation(fields: [assinaturaPacoteClienteId], references: [id])
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([clienteId])
+  @@index([lavaJatoId])
+  @@index([gatewayPagamentoId])
+  @@index([grupoId])
+  @@index([assinaturaPacoteClienteId])
+}
+
+// ============================= AVALIAÇÕES (ESTRELAS) =============================
+
+// Uma avaliação (1 a 5 estrelas + comentário opcional) de um cliente sobre uma
+// lava jato. Restrita a 1 por par cliente/lava jato: avaliar de novo atualiza
+// a mesma avaliação em vez de criar outra (ver LavaJatosService.avaliar).
+model Avaliacao {
+  id          String   @id @default(uuid())
+  lavaJatoId String
+  lavaJato   LavaJato @relation(fields: [lavaJatoId], references: [id])
+  clienteId   String
+  cliente     Usuario  @relation(fields: [clienteId], references: [id])
+  nota        Int // 1 a 5
+  comentario  String?  @db.Text
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@unique([lavaJatoId, clienteId])
+  @@index([lavaJatoId])
+}
+
+// ============================= PACOTES MENSAIS (assinatura do cliente no lava jato) =============================
+//
+// Diferente de "Pacote" (acima): aquele é um combo pago uma vez (ex: lavagem +
+// cera por R$50). Este é uma assinatura recorrente mensal — o cliente paga
+// todo mês e pode usar os serviços incluídos um número limitado de vezes por
+// semana, só nos dias que o lava jato permitir (ver PacotesMensaisService
+// pra como a cota semanal e os dias permitidos são conferidos no momento de
+// agendar).
+
+model PacoteMensal {
+  id             String   @id @default(uuid())
+  lavaJatoId    String
+  lavaJato      LavaJato @relation(fields: [lavaJatoId], references: [id])
+  nome           String
+  descricao      String?  @db.Text
+  precoCentavos  Int
+  // Quantas vezes por semana o cliente pode usar os serviços do pacote.
+  vezesPorSemana Int
+  // Dias da semana em que dá pra agendar usando o pacote — 0=domingo ...
+  // 6=sábado (igual Date.getDay()), guardado como JSON (MySQL não tem array
+  // nativo, mesmo caso de HorarioTrabalho). Ex: [2,4,6] = terça/quinta/sábado.
+  diasSemanaPermitidos Json
+  ativo          Boolean  @default(true)
+  criadoEm       DateTime @default(now())
+
+  servicos    PacoteMensalServico[]
+  assinaturas AssinaturaPacoteCliente[]
+
+  @@index([lavaJatoId])
+}
+
+// Relação N:N entre PacoteMensal e Servico (mesmo padrão de PacoteServico).
+model PacoteMensalServico {
+  pacoteMensalId String
+  pacoteMensal   PacoteMensal @relation(fields: [pacoteMensalId], references: [id], onDelete: Cascade)
+  servicoId      String
+  servico        Servico      @relation(fields: [servicoId], references: [id])
+
+  @@id([pacoteMensalId, servicoId])
+}
+
+// Assinatura de UM cliente a UM pacote mensal de UMA lava jato — cobrada via
+// Mercado Pago "Preapproval" (recorrente, cartão salvo) na conta da própria
+// lava jato, igual ao padrão já usado pra assinatura SaaS (ver
+// MercadoPagoService), só que aqui quem paga é o cliente final, não o dono
+// do lava jato.
+model AssinaturaPacoteCliente {
+  id                  String   @id @default(uuid())
+  pacoteMensalId      String
+  pacoteMensal        PacoteMensal @relation(fields: [pacoteMensalId], references: [id])
+  clienteId           String
+  cliente             Usuario  @relation(fields: [clienteId], references: [id])
+  lavaJatoId         String
+  lavaJato           LavaJato @relation(fields: [lavaJatoId], references: [id])
+  // Veículo coberto: o preço mensal depende do porte dele e a cota semanal só
+  // vale pra agendamentos desse mesmo veículo. O mesmo pacote pode ser
+  // assinado várias vezes pelo mesmo cliente, uma por veículo.
+  veiculoId           String
+  veiculo             Veiculo  @relation(fields: [veiculoId], references: [id], onDelete: Restrict)
+  status              StatusAssinaturaPacote @default(PENDENTE)
+  // Pix ou Cartão (nunca Dinheiro aqui) — ver PacotesMensaisService.assinar.
+  metodoPagamento     MetodoPagamento @default(CARTAO)
+  // true só quando metodoPagamento=CARTAO e o cliente autorizou a cobrança
+  // recorrente direto no app (sem sair pro site do Mercado Pago — ver
+  // MercadoPagoService.criarPreapprovalComCartao): o Mercado Pago cobra o
+  // cartão sozinho todo mês a partir daí. Quando false (Pix, ou Cartão sem
+  // marcar essa opção), cada período é cobrado avulso — igual um
+  // agendamento normal — e o cliente precisa voltar no app pra pagar de novo
+  // (ou ativar o automático) quando proximaCobrancaEm vencer.
+  renovacaoAutomatica Boolean  @default(false)
+  inicioEm            DateTime @default(now())
+  proximaCobrancaEm   DateTime?
+  gatewayAssinaturaId String? // id da preapproval no Mercado Pago (só quando renovacaoAutomatica)
+  criadoEm            DateTime @default(now())
+
+  agendamentos Agendamento[]
+  pagamentos   Pagamento[]
+
+  @@unique([pacoteMensalId, clienteId, veiculoId])
+  @@index([lavaJatoId])
+  @@index([clienteId])
+}
+
+// ============================= PLANOS E ASSINATURA (SAAS) =============================
+
+model Plano {
+  id                  String   @id @default(uuid())
+  nome                String
+  precoCentavos       Int
+  limiteFuncionarios  Int?     // null = ilimitado
+  // Lista de recursos exibidos no plano. MySQL não tem tipo de lista nativo
+  // (diferente do Postgres), então guardamos como JSON: sempre um array de
+  // strings, ex: ["Até 2 funcionários", "Agenda e financeiro"].
+  recursos            Json
+  ativo               Boolean  @default(true)
+
+  // Desconto do plano ANUAL (12x o mensal) — configurado pelo SAAS_ADMIN no
+  // admin-web (ver PlanosService). Interpretação de descontoAnualValor
+  // depende do tipo: PERCENTUAL = pontos percentuais (0-100), VALOR_FIXO =
+  // centavos abatidos do total. Ver calcularPrecoAnualCentavos (compartilhado).
+  descontoAnualTipo  TipoDesconto @default(PERCENTUAL)
+  descontoAnualValor Int          @default(0)
+
+  // Atendimento prioritário: quando true, a tela "Suporte" do dono/equipe
+  // desse lava jato (mobile) mostra o WhatsApp abaixo, além do e-mail de
+  // suporte padrão (que é global, ver ConfiguracaoPlataforma.emailSuporte).
+  // Validado no ConfiguracoesService.obterSuporte — só devolve o WhatsApp se
+  // o plano ATUAL do lava jato tiver essa flag ligada.
+  atendimentoPrioritario Boolean @default(false)
+  whatsappSuporte        String?
+
+  assinaturas Assinatura[]
+  pagamentosAssinatura PagamentoAssinatura[]
+}
+
+model Assinatura {
+  id                 String           @id @default(uuid())
+  lavaJatoId        String           @unique
+  lavaJato          LavaJato        @relation(fields: [lavaJatoId], references: [id])
+  planoId            String
+  plano              Plano            @relation(fields: [planoId], references: [id])
+  status             StatusAssinatura @default(TRIAL)
+  inicioEm           DateTime         @default(now())
+  proximaCobrancaEm  DateTime?
+  // Quando o período de teste termina (calculado uma vez no cadastro, a
+  // partir de ConfiguracaoPlataforma.diasTesteGratis vigente naquele
+  // momento — mudar a config depois não afeta trials já em andamento).
+  // Ver AssinaturasService.expirarTrialSeVencido: passado esse instante sem
+  // virar ATIVA, o status vira CANCELADA sozinho (checado sob demanda,
+  // não por um job agendado).
+  trialTerminaEm     DateTime?
+  // Marca o instante em que o status virou INADIMPLENTE/CANCELADA (trial
+  // vencido ou cobrança recorrente falhou/cancelada) — null enquanto
+  // TRIAL/ATIVA. É a partir daqui que se conta a carência
+  // (ConfiguracaoPlataforma.horasCarenciaAposVencimento) antes de a
+  // lava jato sumir pros clientes (equipe é bloqueada na hora, sem
+  // carência — ver AssinaturaGuard).
+  bloqueadaEm        DateTime?
+  // Marca quando o push de "assinatura vencendo em até 3 dias" foi mandado
+  // pra equipe desse lava jato — evita mandar de novo todo dia enquanto a
+  // mesma janela de vencimento estiver aberta (ver AssinaturasService.
+  // verificarAvisosDeVencimento). Volta pra null sempre que o status vira
+  // TRIAL/ATIVA de novo (ciclo novo — ver dadosParaStatus), então um aviso
+  // novo pode ser mandado no próximo vencimento.
+  avisoVencimentoEnviadoEm DateTime?
+  // id da assinatura (preapproval) no Mercado Pago — ver MercadoPagoService.criarPreapproval.
+  // Só preenchido em assinaturas ANTIGAS, criadas antes do pagamento nativo
+  // (ver AssinaturasService.criarCheckout, mantido só pra quem já autorizou
+  // uma cobrança recorrente por ali continuar sendo cobrado automaticamente).
+  // Assinaturas pagas pelo fluxo novo (PagamentoAssinatura) nunca preenchem
+  // isso — é o que distingue as duas pra AssinaturasService.expirarTrialSeVencido
+  // saber quais assinaturas ATIVA e vencidas devem virar INADIMPLENTE sozinhas
+  // (sem preapproval, ninguém mais vai avisar isso por webhook).
+  gatewayAssinaturaId String?
+  // Periodicidade do ciclo atual (mensal ou anual) — decide de quanto em
+  // quanto tempo proximaCobrancaEm avança quando um PagamentoAssinatura é
+  // aprovado (ver AssinaturasPagamentoService.aplicarPagamentoAprovado).
+  periodicidade PeriodicidadeAssinatura @default(MENSAL)
+
+  faturas Fatura[]
+  pagamentos PagamentoAssinatura[]
+}
+
+// Configuração global do SaaS (Divisions Tech), editável pelo SAAS_ADMIN no
+// admin-web — sempre uma linha só (singleton, id fixo "default"). Ver
+// ConfiguracoesService.obter (cria a linha com os defaults abaixo se ainda
+// não existir).
+model ConfiguracaoPlataforma {
+  id                          String   @id @default("default")
+  diasTesteGratis             Int      @default(14)
+  horasCarenciaAposVencimento Int      @default(24)
+  // E-mail de contato exibido na tela "Suporte" do app (cliente, funcionário
+  // e dono do lava jato) — ver ConfiguracoesController.obterSuporte.
+  emailSuporte                String?
+  atualizadoEm                DateTime @updatedAt
+}
+
+model Fatura {
+  id               String       @id @default(uuid())
+  assinaturaId     String
+  assinatura       Assinatura   @relation(fields: [assinaturaId], references: [id])
+  valorCentavos    Int
+  vencimentoEm     DateTime
+  status           StatusFatura @default(PENDENTE)
+  metodoPagamento  String?
+  // id da cobrança no gateway de pagamento — preencher na integração
+  gatewayFaturaId  String?
+  criadoEm         DateTime     @default(now())
+
+  @@index([assinaturaId])
+}
+
+// Tentativa de pagamento nativo (Pix ou cartão tokenizado, direto no app —
+// mesmo mecanismo que o cliente final usa pra pagar um agendamento, ver
+// CartaoScreen/AgendamentosService.criarLote) da mensalidade/anuidade do
+// SaaS. Diferente de Fatura (ledger histórico de cobranças já resolvidas,
+// alimentado também pelo webhook de preapproval legado): esta tabela existe
+// pra acompanhar UMA cobrança em andamento (poll de Pix/3DS — ver
+// AssinaturasPagamentoService, mesmo padrão de Pagamento/AgendamentosService)
+// e, quando aprovada, gera a Fatura correspondente e estende
+// Assinatura.proximaCobrancaEm.
+model PagamentoAssinatura {
+  id            String                  @id @default(uuid())
+  assinaturaId  String
+  assinatura    Assinatura              @relation(fields: [assinaturaId], references: [id])
+  planoId       String
+  plano         Plano                   @relation(fields: [planoId], references: [id])
+  periodicidade PeriodicidadeAssinatura
+  metodo        MetodoPagamento
+  status        StatusPagamento         @default(PENDENTE)
+  valorCentavos Int
+
+  gatewayPagamentoId String?
+  pixQrCodeBase64    String? @db.LongText
+  pixCopiaECola      String? @db.Text
+  // URL do desafio 3DS (ver MercadoPagoService.criarPagamentoCartao) — mesmo
+  // mecanismo do pagamento de agendamento.
+  desafio3dsUrl      String? @db.Text
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([assinaturaId])
+}
