@@ -34,8 +34,10 @@
     ],
     "extra": {
       "eas": {
-        "_comment": "Rode `eas init` neste projeto para gerar o projectId do Expo (necessário para notificações push e atualizações OTA). Não reutilize o projectId do BarberOne."
+        "_comment": "Rode `eas init` neste projeto para gerar o projectId do Expo (necessário para notificações push e atualizações OTA). Não reutilize o projectId do BarberOne.",
+        "projectId": "be0d7822-0536-4756-9c14-1db5252eb77d"
       }
-    }
+    },
+    "owner": "wilkerbruno"
   }
 }
