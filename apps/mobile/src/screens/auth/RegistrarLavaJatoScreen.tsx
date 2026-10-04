@@ -11,6 +11,7 @@ import { Card } from "../../components/Card";
 import { PasswordInput } from "../../components/PasswordInput";
 import { ENDERECO_VAZIO, EnderecoForm, enderecoParaApi, enderecoValido } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { anexarArquivo } from "../../utils/anexarArquivo";
 
 // Onboarding de uma novo lava jato assinante do SaaS, pelo próprio app:
 // cria o tenant + o usuário dono (LAVAJATO_ADMIN) num plano em TRIAL, e
@@ -61,12 +62,8 @@ export function RegistrarLavaJatoScreen() {
   async function enviarLogoSeHouver(lavaJatoId: string) {
     if (!logo) return;
     const formData = new FormData();
-    formData.append("logo", {
-      uri: logo.uri,
-      name: logo.fileName ?? "logo.jpg",
-      type: logo.mimeType ?? "image/jpeg",
-    } as unknown as Blob);
     try {
+      await anexarArquivo(formData, "logo", logo);
       await api.post(`/lavajatos/${lavaJatoId}/logo`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -92,7 +89,7 @@ export function RegistrarLavaJatoScreen() {
     setErro(null);
     setCarregando(true);
     try {
-      const { data } = await api.post("/auth/registrar-lavaJato", {
+      const { data } = await api.post("/auth/registrar-lavajato", {
         nomeLavaJato,
         nomeDono,
         email,

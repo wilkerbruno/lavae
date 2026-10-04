@@ -8,6 +8,7 @@ import { api } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/Button";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { anexarArquivo } from "../../utils/anexarArquivo";
 
 // Traduz o erro da chamada numa frase curta e específica, em vez do genérico
 // "tente de novo" — isso é o que permite identificar de cara se é a API fora
@@ -74,12 +75,8 @@ export function LogoScreen() {
     if (!lavaJatoId || !novaLogo) return;
     setStatus("enviando");
     const formData = new FormData();
-    formData.append("logo", {
-      uri: novaLogo.uri,
-      name: novaLogo.fileName ?? "logo.jpg",
-      type: novaLogo.mimeType ?? "image/jpeg",
-    } as unknown as Blob);
     try {
+      await anexarArquivo(formData, "logo", novaLogo);
       const { data } = await api.post(`/lavajatos/${lavaJatoId}/logo`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });

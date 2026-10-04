@@ -79,14 +79,9 @@ export function LoginScreen({ navigation }: Props) {
             variant="secondary"
             onPress={() => navigation.navigate("RegistrarCliente")}
           />
-          {/* Cadastro de lavaJato usa WebView/seletor de foto ainda não
-              adaptados pra versão web (ver RegistrarLavaJatoScreen) — dono de
-              lavaJato cadastra pelo app Android por enquanto. */}
-          {Platform.OS !== "web" && (
-            <Text style={styles.linkLavaJato} onPress={() => navigation.navigate("RegistrarLavaJato")}>
-              É dono de lava jato? Cadastre seu lava jato
-            </Text>
-          )}
+          <Text style={styles.linkLavaJato} onPress={() => navigation.navigate("RegistrarLavaJato")}>
+            É dono de lava jato? Cadastre seu lava jato
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

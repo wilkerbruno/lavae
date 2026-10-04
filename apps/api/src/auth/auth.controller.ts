@@ -49,7 +49,7 @@ export class AuthController {
 
   // Onboarding de uma novo lava jato assinante do SaaS.
   @Public()
-  @Post("registrar-lavaJato")
+  @Post("registrar-lavajato")
   async registerLavaJato(@Body() dto: RegisterLavaJatoDto, @Res({ passthrough: true }) res: Response) {
     const resultado = await this.authService.registerLavaJato(dto);
     setarCookieToken(res, resultado.accessToken);
