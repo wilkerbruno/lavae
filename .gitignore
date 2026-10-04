@@ -18,3 +18,6 @@ coverage/
 *.jks
 *.apk
 *.aab
+
+# Excecao: o APK publico de download da landing page (apps/landing/public/downloads)
+!apps/landing/public/downloads/lavae-latest.apk
