@@ -1,16 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs><linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E2A3D"/><stop offset="1" stop-color="#0A1620"/></linearGradient>
-<radialGradient id="brilho" cx=".5" cy=".42" r=".6"><stop offset="0" stop-color="#2FB8E6" stop-opacity=".35"/><stop offset="1" stop-color="#2FB8E6" stop-opacity="0"/></radialGradient></defs>
-<rect width="1024" height="1024" fill="url(#fundo)"/><rect width="1024" height="1024" fill="url(#brilho)"/>
-  <defs>
-    <linearGradient id="gota" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#BFEFFF"/></linearGradient>
-    <linearGradient id="agua" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2FB8E6"/><stop offset="1" stop-color="#1479B8"/></linearGradient>
-    <clipPath id="c"><path d="M512 190 C512 190 292 440 292 650 A220 220 0 0 0 732 650 C732 440 512 190 512 190 Z"/></clipPath>
-  </defs>
-  <path d="M512 190 C512 190 292 440 292 650 A220 220 0 0 0 732 650 C732 440 512 190 512 190 Z" fill="url(#gota)"/>
-  <g clip-path="url(#c)">
-    <path d="M250 640 C340 590 420 590 512 640 C604 690 684 690 774 640 L774 900 L250 900 Z" fill="url(#agua)"/>
-    <path d="M250 700 C340 650 420 650 512 700 C604 750 684 750 774 700 L774 900 L250 900 Z" fill="#0F5E94" opacity=".55"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs>
+  <radialGradient id="fundo" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#1b1d22"/><stop offset="1" stop-color="#050506"/></radialGradient>
+  <linearGradient id="letra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d96a6"/><stop offset=".55" stop-color="#4b5362"/><stop offset="1" stop-color="#262b35"/></linearGradient>
+  <linearGradient id="carro" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2b5db0"/><stop offset=".5" stop-color="#4f86e6"/><stop offset="1" stop-color="#2a56a3"/></linearGradient>
+  <linearGradient id="pneu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f74d6"/><stop offset=".5" stop-color="#173a7a"/><stop offset="1" stop-color="#0c1d42"/></linearGradient>
+  <linearGradient id="aro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dbe8ff"/><stop offset=".5" stop-color="#6f9be0"/><stop offset="1" stop-color="#2a4f94"/></linearGradient>
+  <linearGradient id="raio" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe0ff"/><stop offset="1" stop-color="#3c68b5"/></linearGradient>
+  <linearGradient id="barra" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa0f5"/><stop offset=".5" stop-color="#2f62c2"/><stop offset="1" stop-color="#16346f"/></linearGradient>
+  <linearGradient id="tag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a92a0"/><stop offset="1" stop-color="#555c69"/></linearGradient>
+  <filter id="sombra" x="-10%" y="-10%" width="130%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".7"/></filter>
+</defs><rect width="1024" height="1024" fill="url(#fundo)"/><g transform="translate(-1797.5 -345.2) scale(3.1)"><path d="M711 174 L745 146 L779 174 L779 192 L745 164 L711 192 Z" fill="url(#carro)"/>
+  <mask id="abertura"><rect x="545" y="92" width="400" height="400" fill="#fff"/><path d="M745.0 292.0 L1142.8 333.8 L1132.0 393.3 L1112.3 450.4 L1084.2 504.0 L1048.4 552.7 L1005.7 595.4 L957.0 631.2 Z" fill="#000"/></mask>
+  <g mask="url(#abertura)">
+    <circle cx="745" cy="292" r="76" fill="none" stroke="url(#pneu)" stroke-width="24"/>
+    <circle cx="745" cy="292" r="64" fill="#0a1426"/>
+    <circle cx="745" cy="292" r="62" fill="none" stroke="url(#aro)" stroke-width="5"/>
+    <g><g transform="rotate(18 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(54 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(90 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(126 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(162 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(198 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(234 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(270 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(306 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g><g transform="rotate(342 745 292)"><path d="M740 276 L736 240 Q745 234 754 240 L750 276 Z" fill="url(#raio)"/></g></g>
+    <circle cx="745" cy="292" r="17" fill="url(#aro)"/><circle cx="755.0" cy="292.0" r="2.6" fill="#0b1830"/><circle cx="748.0901699437495" cy="301.51056516295154" r="2.6" fill="#0b1830"/><circle cx="736.9098300562505" cy="297.87785252292474" r="2.6" fill="#0b1830"/><circle cx="736.9098300562505" cy="286.12214747707526" r="2.6" fill="#0b1830"/><circle cx="748.0901699437495" cy="282.48943483704846" r="2.6" fill="#0b1830"/>
+    <circle cx="745" cy="292" r="76" fill="none" stroke="#9ec3ff" stroke-opacity=".28" stroke-width="2" stroke-dasharray="3 7"/>
   </g>
-  <path d="M742 252 Q742 330 820 330 Q742 330 742 408 Q742 330 664 330 Q742 330 742 252 Z" fill="#fff"/>
-  <path d="M838 426 Q838 468 880 468 Q838 468 838 510 Q838 468 796 468 Q838 468 838 426 Z" fill="#fff" opacity=".9"/>
-  <path d="M262 390 Q262 420 292 420 Q262 420 262 450 Q262 420 232 420 Q262 420 262 390 Z" fill="#fff" opacity=".7"/></svg>
+  <!-- travessa do "e" -->
+  <rect x="663" y="283" width="164" height="18" rx="9" fill="url(#barra)"/>
+  <rect x="667" y="285" width="156" height="4" rx="2" fill="#fff" opacity=".35"/></g></svg>
