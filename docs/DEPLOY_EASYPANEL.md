@@ -141,13 +141,13 @@ O painel do dono da plataforma (visão geral, lava jatos, planos, faturamento)
    você mudar essa URL, precisa fazer um novo deploy (rebuild) do painel, não
    só reiniciar o container.
 
-4. Ative um **domínio** para esse serviço também (ex.: `painel.seudominio.com.br`).
+4. Ative um **domínio** para esse serviço também (ex.: `painel.lavae.store`).
 5. Faça o deploy.
 
 Se for configurar cobrança recorrente (Mercado Pago, ver
 `apps/api/.env.example` e os comentários em `AssinaturasService`), aponte
 `MERCADOPAGO_BACK_URL` (variável de ambiente da API) para
-`https://painel.seudominio.com.br/pagamento-confirmado` — é a página pra onde
+`https://painel.lavae.store/pagamento-confirmado` — é a página pra onde
 o dono do lava jato volta depois de autorizar o pagamento.
 
 ## 4. O que acontece automaticamente no primeiro boot
@@ -226,7 +226,7 @@ ver comentário em `RootNavigator.tsx`).
    mudar essa URL, precisa fazer um novo deploy (rebuild), não só reiniciar
    o container.
 
-4. Ative um **domínio** para esse serviço (ex.: `app.seudominio.com.br`) —
+4. Ative um **domínio** para esse serviço (ex.: `app.lavae.store`) —
    esse é o link que você manda pros clientes com iPhone.
 5. Faça o deploy.
 

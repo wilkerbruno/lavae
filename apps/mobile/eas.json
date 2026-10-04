@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.seudominio.com.br/api"
+        "EXPO_PUBLIC_API_URL": "https://api.lavae.store/api"
       },
       "channel": "development"
     },
@@ -18,13 +18,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.seudominio.com.br/api"
+        "EXPO_PUBLIC_API_URL": "https://api.lavae.store/api"
       },
       "channel": "preview"
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.seudominio.com.br/api"
+        "EXPO_PUBLIC_API_URL": "https://api.lavae.store/api"
       },
       "channel": "production"
     }

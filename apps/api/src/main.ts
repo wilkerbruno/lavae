@@ -11,9 +11,9 @@ import { AppModule } from "./app.module";
 // cookie). Dá pra adicionar mais origens em produção via CORS_ORIGINS
 // (separadas por vírgula) sem precisar mexer no código.
 const ORIGENS_PADRAO = [
-  "https://app.seudominio.com.br",
-  "https://painel.seudominio.com.br",
-  "https://www.painel.seudominio.com.br",
+  "https://app.lavae.store",
+  "https://painel.lavae.store",
+  "https://www.painel.lavae.store",
 ];
 
 function origemPermitida(origin: string | undefined, extras: string[]): boolean {
@@ -24,7 +24,7 @@ function origemPermitida(origin: string | undefined, extras: string[]): boolean 
   // lavae.lcgx8u.easypanel.host) — o "lcgx8u" é o
   // identificador da sua conta/cluster, não de qualquer app no EasyPanel.
   // Cobre o painel/API/app por qualquer domínio padrão deles, inclusive
-  // enquanto o DNS de painel.seudominio.com.br não estiver resolvendo.
+  // enquanto o DNS de painel.lavae.store não estiver resolvendo.
   if (/^https:\/\/[a-z0-9-]+\.lcgx8u\.easypanel\.host$/.test(origin)) return true;
   return [...ORIGENS_PADRAO, ...extras].includes(origin);
 }
