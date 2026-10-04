@@ -2,7 +2,14 @@
 
 import axios from "axios";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
+// Normaliza a URL da API: garante que termina em "/api" (prefixo global da
+// API NestJS), mesmo que NEXT_PUBLIC_API_URL tenha sido definida sem ele.
+function normalizarApiUrl(bruta: string | undefined): string {
+  const base = (bruta ?? "http://localhost:3000/api").trim().replace(/\/+$/, "");
+  return /\/api$/.test(base) ? base : `${base}/api`;
+}
+
+export const API_URL = normalizarApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 export const api = axios.create({ baseURL: API_URL });
 
