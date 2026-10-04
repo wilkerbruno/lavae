@@ -38,6 +38,12 @@
         "projectId": "be0d7822-0536-4756-9c14-1db5252eb77d"
       }
     },
-    "owner": "wilkerbruno"
+    "owner": "wilkerbruno",
+    "updates": {
+      "url": "https://u.expo.dev/be0d7822-0536-4756-9c14-1db5252eb77d",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
