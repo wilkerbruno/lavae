@@ -1,4 +1,4 @@
-# LavaJato SaaS
+# lavaê (LavaJato SaaS)
 
 Sistema de gestão para lava jatos: agenda, financeiro, catálogo de
 serviços/pacotes com preços por porte do veículo (hatch, sedã, SUV, picape...),

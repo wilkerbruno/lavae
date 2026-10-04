@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <head>
-        <title>Lava Jato OS — Painel SaaS</title>
+        <title>lavaê — Painel SaaS</title>
       </head>
       <body>
         {isPublica ? (
