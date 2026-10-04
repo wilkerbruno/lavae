@@ -28,7 +28,7 @@ APK="$(ls -t build-*.apk | head -1)"
 echo "==> APK gerado: $APK"
 
 # copia o APK pra área de trabalho (WSL e Windows)
-cp "$APK" ~/Desktop/LavaJatoOne.apk
-cp "$APK" "/mnt/c/Users/wilke/Desktop/LavaJatoOne.apk"
+cp "$APK" ~/Desktop/lavae.apk
+cp "$APK" "/mnt/c/Users/wilke/Desktop/lavae.apk"
 
 echo "==> Copiado para a Área de Trabalho."

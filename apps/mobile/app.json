@@ -2,7 +2,7 @@
   "expo": {
     "name": "lavaê",
     "slug": "lavajato-one",
-    "scheme": "lavajatoone",
+    "scheme": "lavajatoapp",
     "version": "0.1.0",
     "runtimeVersion": {
       "policy": "appVersion"
