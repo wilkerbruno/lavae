@@ -2,7 +2,7 @@
 # depende do pacote packages/shared). No EasyPanel, ao criar o serviço da API:
 #   - Build method: Dockerfile
 #   - Build context / Root directory: a raiz do repositório (não apps/api)
-#   - Dockerfile path: apps/api/Dockerfile
+#   - Dockerfile path: Dockerfile (raiz) ou apps/api/Dockerfile — os dois são idênticos
 #
 # Ao subir o container pela primeira vez, ele cria todas as tabelas sozinho
 # (via `prisma db push`, ver CMD no final) — não precisa de acesso SSH nem
@@ -18,6 +18,10 @@ FROM node:22-slim
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+# Sem isso o container roda em UTC por padrão (comum em hosts como o
+# EasyPanel), e todo cálculo de "horário disponível" feito com Date local
+# (ex: "abre às 9h") ficaria 3h adiantado em relação ao horário de Brasília.
+ENV TZ=America/Sao_Paulo
 RUN corepack enable
 WORKDIR /repo
 
@@ -32,7 +36,23 @@ COPY . .
 RUN pnpm install --frozen-lockfile --filter "@lavajato-app/api..."
 
 RUN pnpm --filter @lavajato-app/api prisma:generate
+
+# packages/shared é usado como TypeScript "cru" (sem build próprio) durante o
+# desenvolvimento do mobile/admin-web, porque o bundler deles (Metro/Next)
+# compila os .ts direto. Mas o `nest build` da API usa o `tsc` de verdade, e
+# se ele enxergar um arquivo .ts de fora de apps/api/src (o do shared) no
+# meio da compilação, ele muda onde tudo é gerado e o `dist/main.js` some do
+# lugar esperado. Por isso compilamos o shared separadamente aqui pra virar
+# um .js + .d.ts de verdade antes de compilar a API (usamos o `tsc` que já
+# está instalado dentro de apps/api pra isso, sem precisar adicionar outra
+# dependência).
+RUN pnpm --filter @lavajato-app/api exec tsc -p ../../packages/shared/tsconfig.json
+
 RUN pnpm --filter @lavajato-app/api build
+
+# Trava o build cedo (com mensagem clara) se um dia isso voltar a acontecer,
+# em vez de descobrir só em produção que faltou o arquivo de entrada.
+RUN test -f /repo/apps/api/dist/main.js || (echo "ERRO: dist/main.js não foi gerado onde esperado" && find /repo/apps/api/dist -maxdepth 2 && exit 1)
 
 WORKDIR /repo/apps/api
 ENV NODE_ENV=production
