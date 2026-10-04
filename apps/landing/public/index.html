@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="lavaê: agenda, equipe, pacotes mensais e financeiro do seu lava jato num só app. Baixe o app Android ou agende pela web.">
+<meta property="og:title" content="lavaê — o seu lava jato na palma da mão">
+<meta property="og:description" content="Agenda por porte do veículo, pacotes mensais, equipe, comissão e pagamento por Pix e cartão.">
+<meta name="theme-color" content="#0A1620">
+<title>lavaê</title>
+<link rel="icon" href="assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /*
+    Conceito: hero assimétrico (texto à esquerda, celular com o painel real do
+    dono à direita), seguido de recursos, 3 passos e download em dois caminhos.
+    Mundo escuro único (o app não tem modo claro), mesma paleta do app:
+    azul-petróleo profundo com ciano de água/espuma como destaque.
+  */
+  :root{
+    --bg:#0A1620;
+    --surface:#101F2C;
+    --surface-alt:#162A3A;
+    --ink:#EAF4FB;
+    --ink-muted:#8AA1B3;
+    --border:#223A4D;
+    --accent:#2FB8E6;
+    --accent-ink:#041620;
+    --accent-soft:#10394D;
+    --success:#4FBF8B;
+    --font-display:'Sora', system-ui, sans-serif;
+    --font-body:'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;scroll-padding-top:72px;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+  img,svg{max-width:100%;}
+  h1,h2,h3{font-family:var(--font-display);font-weight:600;margin:0;text-wrap:balance;}
+  p{margin:0;}
+  a{color:inherit;}
+  .wrap{max-width:1120px;margin-inline:auto;padding-inline:clamp(16px,5vw,32px);}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);}
+
+  header.site{position:sticky;top:0;z-index:20;background:rgba(10,22,32,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding-block:14px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.01em;}
+  .brand-mark{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--border);flex:none;display:block;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-body);font-weight:600;font-size:14px;padding:11px 20px;border-radius:10px;border:1px solid transparent;text-decoration:none;cursor:pointer;white-space:nowrap;}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);}
+  .btn-primary:hover{background:#55c9ee;}
+  .nav-cta{display:none;}
+  @media(min-width:760px){.nav-cta{display:inline-flex;}}
+  .menu-toggle{display:inline-flex;background:none;border:1px solid var(--border);border-radius:9px;padding:8px;color:var(--ink);}
+  @media(min-width:760px){.menu-toggle{display:none;}}
+  .mobile-panel{display:flex;flex-direction:column;gap:14px;padding-block:16px;border-top:1px solid var(--border);}
+  .mobile-panel[hidden]{display:none;}
+  .mobile-panel a{font-size:15px;text-decoration:none;color:var(--ink);}
+  @media(min-width:760px){.mobile-panel{display:none!important;}}
+  .links-desktop{display:none;}
+  @media(min-width:760px){.links-desktop{display:flex;gap:28px;align-items:center;}}
+  .links-desktop a{font-size:14px;color:var(--ink-muted);text-decoration:none;}
+  .links-desktop a:hover{color:var(--ink);}
+
+  .hero{padding-block:clamp(40px,7vw,88px) clamp(32px,6vw,64px);}
+  .hero-grid{display:grid;gap:48px;align-items:center;}
+  @media(min-width:900px){.hero-grid{grid-template-columns:1.05fr .95fr;gap:56px;}}
+  .hero h1{font-size:clamp(34px,5.2vw,54px);line-height:1.08;margin-block:14px 18px;}
+  .hero h1 em{font-style:normal;color:var(--accent);}
+  .hero .lede{font-size:17px;line-height:1.6;color:var(--ink-muted);max-width:46ch;}
+  .hero-ctas{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:28px;}
+  .hero-ctas .btn-primary{padding:13px 24px;font-size:15px;}
+  .web-link{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--accent);padding-bottom:2px;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;}
+  .chip{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);border:1px solid var(--border);border-radius:999px;padding:7px 13px;display:inline-flex;align-items:center;gap:7px;}
+  .chip svg{width:13px;height:13px;color:var(--accent);flex:none;}
+
+  .phone-stage{display:flex;justify-content:center;}
+  .phone{width:min(290px,78vw);background:#06101A;border:1px solid var(--border);border-radius:34px;padding:14px 12px 20px;box-shadow:0 30px 70px -30px rgba(47,184,230,.28), 0 30px 70px -30px rgba(0,0,0,.8);}
+  .phone-screen{background:var(--bg);border-radius:22px;overflow:hidden;border:1px solid var(--border);}
+  .phone-notch{height:20px;display:flex;align-items:center;justify-content:center;}
+  .phone-notch::before{content:"";width:70px;height:6px;border-radius:99px;background:var(--border);}
+  .phone-body{padding:4px 18px 18px;}
+  .phone-body .eyebrow{font-size:10px;}
+  .phone-shop{font-family:var(--font-display);font-weight:600;font-size:18px;margin-top:4px;}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px;}
+  .stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:11px 12px;}
+  .stat-tile.wide{grid-column:1 / -1;}
+  .stat-tile .label{font-size:10.5px;color:var(--ink-muted);}
+  .stat-tile .value{font-family:var(--font-mono);font-weight:600;font-size:17px;margin-top:4px;font-variant-numeric:tabular-nums;}
+  .stat-tile.wide .value{color:var(--accent);}
+  .team-head{font-size:10.5px;letter-spacing:.08em;color:var(--ink-muted);margin-top:18px;text-transform:uppercase;}
+  .team-row{display:flex;justify-content:space-between;align-items:center;padding-block:9px;border-top:1px solid var(--border);font-size:13px;}
+  .team-row span:last-child{font-family:var(--font-mono);color:var(--ink-muted);font-variant-numeric:tabular-nums;}
+  .tab-bar{display:flex;justify-content:space-around;border-top:1px solid var(--border);padding-top:10px;margin-top:16px;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9.5px;color:var(--ink-muted);}
+  .tab svg{width:16px;height:16px;}
+  .tab.active{color:var(--accent);}
+
+  section{padding-block:clamp(48px,8vw,88px);border-top:1px solid var(--border);}
+  .section-head{max-width:56ch;margin-bottom:clamp(28px,5vw,44px);}
+  .section-head h2{font-size:clamp(26px,3.6vw,36px);margin-top:10px;}
+  .section-head p{color:var(--ink-muted);font-size:15.5px;margin-top:12px;line-height:1.6;}
+  .feature-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+  .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px;}
+  .feature-icon{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent);}
+  .feature-icon svg{width:19px;height:19px;}
+  .feature-card h3{font-size:16px;font-weight:700;font-family:var(--font-body);}
+  .feature-card p{font-size:13.6px;color:var(--ink-muted);line-height:1.55;}
+  .flow{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+  .flow-step{border:1px solid var(--border);border-radius:16px;padding:22px;background:var(--surface);}
+  .flow-step .num{font-family:var(--font-mono);color:var(--accent);font-size:13px;}
+  .flow-step h3{font-size:16px;margin-top:10px;font-family:var(--font-body);font-weight:700;}
+  .flow-step p{font-size:13.6px;color:var(--ink-muted);margin-top:8px;line-height:1.55;}
+
+  .download{border-radius:22px;background:var(--surface);border:1px solid var(--border);padding:clamp(28px,5vw,48px);display:grid;gap:30px;}
+  @media(min-width:860px){.download{grid-template-columns:1.1fr .9fr;align-items:center;}}
+  .download h2{font-size:clamp(24px,3.4vw,32px);}
+  .download p.lede{color:var(--ink-muted);margin-top:12px;font-size:15px;line-height:1.6;}
+  .paths{display:grid;gap:12px;}
+  .path-card{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:14px;padding:16px 18px;text-decoration:none;color:var(--ink);background:var(--bg);}
+  .path-card:hover{border-color:var(--accent);}
+  .path-icon{width:36px;height:36px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;}
+  .path-icon svg{width:18px;height:18px;}
+  .path-card strong{display:block;font-size:14.5px;}
+  .path-card span span{display:block;font-size:12.5px;color:var(--ink-muted);margin-top:2px;}
+  .install-note{margin-top:18px;font-size:12.5px;color:var(--ink-muted);line-height:1.55;}
+
+  footer{border-top:1px solid var(--border);padding-block:28px;}
+  .footer-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;font-size:12.5px;color:var(--ink-muted);}
+  .footer-row .brand{font-size:14px;}
+  .dev-credit{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink-muted);border:1px solid var(--border);border-radius:999px;padding:7px 14px 7px 16px;}
+  .dev-credit:hover{border-color:var(--ink-muted);color:var(--ink);}
+  .dev-credit span{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;}
+  .dev-credit img{display:block;height:16px;width:auto;}
+
+  @media(prefers-reduced-motion:no-preference){
+    .reveal{animation:rise .5s ease both;}
+    @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="wrap nav">
+    <div class="brand"><img class="brand-mark" src="assets/lavae-mark-128.png" alt="lavaê" width="38" height="38">lavaê</div>
+    <nav class="links-desktop">
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#baixar">Baixar app</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a class="btn btn-primary nav-cta" href="#baixar">Baixar o app</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="wrap mobile-panel" id="mobilePanel" hidden>
+    <a href="#recursos">Recursos</a>
+    <a href="#como-funciona">Como funciona</a>
+    <a class="btn btn-primary" href="#baixar" style="width:fit-content;">Baixar o app</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" style="border-top:none;">
+    <div class="wrap hero-grid">
+      <div class="reveal">
+        <p class="eyebrow">Pra quem vive de carro brilhando</p>
+        <h1>Seu lava jato inteiro <em>na palma da mão.</em></h1>
+        <p class="lede">Agenda por porte do veículo, pacotes mensais, equipe, comissão e faturamento num só app. O cliente marca o próprio horário — você só confere o caixa no fim do dia.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#baixar">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
+            Baixar o app (Android)
+          </a>
+          <a class="web-link" href="https://app.lavae.store" target="_blank" rel="noopener">Sou cliente, quero agendar →</a>
+        </div>
+        <div class="chips">
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Agendamento online</span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Pix e cartão</span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-5a2 2 0 0 1 2-1.4h10a2 2 0 0 1 2 1.4l2 5v6h-3v-2H6v2H3z"/><circle cx="7.5" cy="13.5" r=".8"/><circle cx="16.5" cy="13.5" r=".8"/></svg>Preço por porte</span>
+        </div>
+      </div>
+
+      <div class="phone-stage">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-body">
+              <p class="eyebrow">Painel do dono</p>
+              <p class="phone-shop">Lava Jato Brilho</p>
+              <div class="stat-row">
+                <div class="stat-tile wide"><p class="label">Faturamento hoje</p><p class="value">R$ 1.260</p></div>
+                <div class="stat-tile"><p class="label">Agendamentos</p><p class="value">14</p></div>
+                <div class="stat-tile"><p class="label">Lucro líquido</p><p class="value">R$ 610</p></div>
+              </div>
+              <p class="team-head">Por funcionário</p>
+              <div class="team-row"><span>Rafael Souza</span><span>R$ 480</span></div>
+              <div class="team-row"><span>Marcos Lima</span><span>R$ 390</span></div>
+              <div class="tab-bar">
+                <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Início</div>
+                <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18"/></svg>Agenda</div>
+                <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Financeiro</div>
+                <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>Mais</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="recursos">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Recursos</p>
+        <h2>Tudo que a correria do lava jato pede</h2>
+        <p>Nada de caderno, planilha ou três grupos de WhatsApp pra organizar o dia.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+          <h3>Agenda sem fricção</h3>
+          <p>O cliente escolhe serviço, veículo e horário e confirma sozinho. Chega de perguntar no WhatsApp se tem vaga.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-5a2 2 0 0 1 2-1.4h10a2 2 0 0 1 2 1.4l2 5v6h-3v-2H6v2H3z"/><circle cx="7.5" cy="13.5" r=".8"/><circle cx="16.5" cy="13.5" r=".8"/></svg></div>
+          <h3>Preço por porte do veículo</h3>
+          <p>Moto, hatch, sedan, SUV ou caminhonete: você define o valor de cada porte e o app calcula o total na hora.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></div>
+          <h3>Pacotes mensais</h3>
+          <p>Venda lavagens em pacote com cobrança recorrente no cartão. Receita previsível e cliente que volta todo mês.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 20v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg></div>
+          <h3>Equipe e comissão</h3>
+          <p>Cadastre cada funcionário, defina a comissão e os horários dele e acompanhe quanto cada um rendeu.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg></div>
+          <h3>Pagamento direto na sua conta</h3>
+          <p>O cliente paga no Pix ou cartão pelo Mercado Pago, e o dinheiro cai direto na conta do seu lava jato.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg></div>
+          <h3>Financeiro do dia a dia</h3>
+          <p>Faturamento, lucro líquido e o quanto cada funcionário trouxe, sem abrir planilha nenhuma.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Como funciona</p>
+        <h2>Do cadastro ao primeiro carro agendado</h2>
+      </div>
+      <div class="flow">
+        <div class="flow-step">
+          <p class="num">01</p>
+          <h3>Cadastre seu lava jato</h3>
+          <p>Nome, serviços, preços por porte e horário de funcionamento. Leva poucos minutos e já começa o teste grátis.</p>
+        </div>
+        <div class="flow-step">
+          <p class="num">02</p>
+          <h3>Chame sua equipe</h3>
+          <p>Cada funcionário ganha o próprio login para ver a agenda e a comissão dele, sem acesso ao resto.</p>
+        </div>
+        <div class="flow-step">
+          <p class="num">03</p>
+          <h3>Deixe os clientes agendarem</h3>
+          <p>Mande o link no status do WhatsApp do lava jato. Eles marcam sozinhos, você só atende.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="baixar">
+    <div class="wrap">
+      <div class="download">
+        <div>
+          <p class="eyebrow">Baixar</p>
+          <h2>Pare de perder cliente por falta de agenda organizada.</h2>
+          <p class="lede">Teste grátis, sem compromisso. Dois jeitos de entrar, dependendo de quem você é:</p>
+          <p class="install-note">Ao abrir o .apk, o Android pode pedir permissão para instalar apps de fora da loja. É só permitir para o navegador e concluir a instalação.</p>
+        </div>
+        <div class="paths">
+          <a class="path-card" href="/downloads/lavae-latest.apk" download>
+            <span class="path-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 18h.01"/></svg></span>
+            <span>
+              <strong>Sou dono de lava jato</strong>
+              <span>Baixar o app Android (.apk) — instala em menos de um minuto.</span>
+            </span>
+          </a>
+          <a class="path-card" href="https://app.lavae.store" target="_blank" rel="noopener">
+            <span class="path-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            <span>
+              <strong>Sou cliente, quero agendar</strong>
+              <span>Abre pelo navegador, sem instalar nada.</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <div class="brand"><img class="brand-mark" src="assets/lavae-mark-128.png" alt="" width="28" height="28" style="width:28px;height:28px;">lavaê</div>
+    <span>© <span id="ano"></span> lavaê. Todos os direitos reservados.</span>
+    <a class="dev-credit" href="https://divisionstech.com" target="_blank" rel="noopener">
+      <span>Desenvolvido por</span>
+      <img src="assets/divisionstech-260.png" alt="Divisions Tech">
+    </a>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('ano').textContent = new Date().getFullYear();
+  var toggle = document.getElementById('menuToggle');
+  var panel = document.getElementById('mobilePanel');
+  toggle.addEventListener('click', function () {
+    var aberto = !panel.hidden;
+    panel.hidden = aberto;
+    toggle.setAttribute('aria-expanded', String(!aberto));
+  });
+  panel.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+  });
+</script>
+</body>
+</html>
