@@ -21,7 +21,7 @@ function origemPermitida(origin: string | undefined, extras: string[]): boolean 
   if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return true; // dev local
   if (/^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)) return true; // Expo Go na rede local
   // Domínios automáticos do EasyPanel desse projeto (ex:
-  // banco-de-dados-lava jato.lcgx8u.easypanel.host) — o "lcgx8u" é o
+  // lavae.lcgx8u.easypanel.host) — o "lcgx8u" é o
   // identificador da sua conta/cluster, não de qualquer app no EasyPanel.
   // Cobre o painel/API/app por qualquer domínio padrão deles, inclusive
   // enquanto o DNS de painel.seudominio.com.br não estiver resolvendo.
