@@ -62,7 +62,18 @@ const REACT_SINGLETON = new Set(["react", "react/jsx-runtime", "react/jsx-dev-ru
 // arquivo a ser usado no bundle web também, evitando o `import.meta`.
 const ZUSTAND_CJS_ENTRY = { zustand: "index.js" };
 
+// O pacote compartilhado (packages/shared) aponta "main" para dist/index.js,
+// que só existe depois de compilar com tsc — e NÃO existe no build do EAS
+// (a pasta dist não vai pro git), o que fazia o "Bundle JavaScript" falhar com
+// "Unable to resolve @lavajato-app/shared". Aqui o Metro lê direto o código-fonte
+// TypeScript (src/index.ts), que o Babel já compila — sem passo extra de build,
+// igual em dev, no EAS e na versão web.
+const SHARED_SRC = path.join(workspaceRoot, "packages", "shared", "src", "index.ts");
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === "@lavajato-app/shared") {
+    return { type: "sourceFile", filePath: SHARED_SRC };
+  }
   const pedindoDoCalendario = context.originModulePath.includes(`${path.sep}react-native-calendars${path.sep}`);
   if (pedindoDoCalendario && REACT_SINGLETON.has(moduleName)) {
     return context.resolveRequest({ ...context, originModulePath: origemSingleton }, moduleName, platform);
