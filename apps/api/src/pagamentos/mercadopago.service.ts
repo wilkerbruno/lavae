@@ -177,11 +177,14 @@ export class MercadoPagoService {
   // usa um token assinado em vez do id cru, pra ninguém conseguir conectar a
   // conta de outro lava jato adivinhando o id).
   gerarUrlAutorizacao(state: string): string {
-    const clientId = this.config.get<string>("MERCADOPAGO_CLIENT_ID");
-    const redirectUri = this.config.get<string>("MERCADOPAGO_OAUTH_REDIRECT_URI");
+    const clientId = this.config.get<string>("MERCADOPAGO_CLIENT_ID")?.trim();
+    const redirectUri = this.config.get<string>("MERCADOPAGO_OAUTH_REDIRECT_URI")?.trim();
     if (!clientId || !redirectUri) {
       throw new BadRequestException("Conexão com Mercado Pago ainda não configurada nesta instalação. Fale com o suporte.");
     }
+    // Diagnóstico: o erro "aplicativo não está pronto para se conectar" do MP
+    // quase sempre é redirect_uri não cadastrada igual na aplicação.
+    this.logger.log(`OAuth MP: client_id=${clientId} redirect_uri=${redirectUri}`);
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: "code",

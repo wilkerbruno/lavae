@@ -11,6 +11,7 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { MaisStackParamList } from "../../navigation/MaisStack";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<MaisStackParamList, "FuncionarioHorarios">;
 
@@ -191,8 +192,9 @@ export function FuncionarioHorariosScreen({ route }: Props) {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text style={styles.title}>Horários de {nome}</Text>
         <Text style={styles.subtitle}>
           Escolha os dias em que {nome.split(" ")[0]} trabalha e o horário. É isso que aparece pro cliente marcar um horário.
@@ -355,6 +357,7 @@ export function FuncionarioHorariosScreen({ route }: Props) {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

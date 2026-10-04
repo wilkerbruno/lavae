@@ -25,6 +25,7 @@ import { Card } from "../../components/Card";
 import { ajustesDoLavaJato, valoresParaPorte } from "../../utils/porte";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { AgendaStackParamList } from "../../navigation/AgendaStack";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<AgendaStackParamList, "AgendarManual">;
 
@@ -222,8 +223,9 @@ export function AgendarManualScreen({ navigation }: Props) {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         {!souFuncionario && (
           <>
             <Text style={styles.sectionTitle}>Profissional</Text>
@@ -432,6 +434,7 @@ export function AgendarManualScreen({ navigation }: Props) {
         )}
       </ScrollView>
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

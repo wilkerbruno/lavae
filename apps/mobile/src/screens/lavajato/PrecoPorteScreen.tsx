@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   AJUSTE_DURACAO_PORTE_PADRAO,
@@ -19,6 +19,7 @@ import { Card } from "../../components/Card";
 import { alertar } from "../../utils/alertaCompat";
 import { ajustesDoLavaJato, valoresParaPorte } from "../../utils/porte";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 // Valores de exemplo só pra o dono enxergar o efeito dos percentuais.
 const EXEMPLO_PRECO_CENTAVOS = 5000;
@@ -102,7 +103,7 @@ export function PrecoPorteScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoid style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.explicacao}>
             Os preços e tempos que você cadastra em Serviços, Pacotes e Pacotes mensais são os de um carro{" "}
@@ -157,7 +158,7 @@ export function PrecoPorteScreen() {
 
           <Button label="Salvar" onPress={salvar} loading={salvando} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

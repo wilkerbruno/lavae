@@ -14,6 +14,7 @@ import { ajustesDoLavaJato, menorPrecoCentavos } from "../../utils/porte";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { abrirNoMapa } from "../../utils/maps";
 import { HomeStackParamList } from "../../navigation/HomeStack";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "LavaJatoDetail">;
 type AvaliacaoComCliente = Avaliacao & { cliente: { id: string; nome: string } };
@@ -150,8 +151,9 @@ export function LavaJatoDetailScreen({ route, navigation }: Props) {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={avaliacoes}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -298,6 +300,7 @@ export function LavaJatoDetailScreen({ route, navigation }: Props) {
         }
       />
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

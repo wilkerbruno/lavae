@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +19,7 @@ import {
   nomeBandeiraExibicao,
   tokenizarCartao,
 } from "../../payments/cartaoNativo";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<MaisStackParamList, "AssinaturaPagamento">;
 
@@ -268,7 +269,7 @@ export function AssinaturaPagamentoScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <DeviceIdCollector onDeviceId={aoReceberDeviceId} />
-      <KeyboardAvoidingView
+      <KeyboardAvoid
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
@@ -430,7 +431,7 @@ export function AssinaturaPagamentoScreen({ route, navigation }: Props) {
             />
           )}
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

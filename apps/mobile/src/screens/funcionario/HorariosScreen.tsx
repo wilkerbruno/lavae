@@ -9,6 +9,7 @@ import { api } from "../../api/client";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 const FORMATO_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const FORMATO_DATA = /^\d{4}-\d{2}-\d{2}$/;
@@ -186,8 +187,9 @@ export function FuncionarioHorariosScreen() {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text style={styles.title}>Meus horários</Text>
         <Text style={styles.subtitle}>
           Escolha os dias em que você trabalha e seu horário. É isso que aparece pro cliente marcar um horário.
@@ -350,6 +352,7 @@ export function FuncionarioHorariosScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

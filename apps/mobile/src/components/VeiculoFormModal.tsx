@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { PORTES_VEICULO, PorteVeiculo, ROTULO_PORTE, Veiculo, VeiculoInput, normalizarPlaca } from "@lavajato-app/shared";
 import { api, mensagemErroApi } from "../api/client";
 import { Button } from "./Button";
 import { colors, radius, spacing } from "../theme/tokens";
+import { KeyboardAvoid } from "./KeyboardAvoid";
 
 interface Props {
   visible: boolean;
@@ -66,7 +67,7 @@ export function VeiculoFormModal({ visible, veiculo, onClose, onSalvo }: Props) 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.fundo}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ width: "100%" }}>
+        <KeyboardAvoid behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ width: "100%" }}>
           <View style={styles.folha}>
             <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
               <Text style={styles.titulo}>{veiculo ? "Editar veículo" : "Novo veículo"}</Text>
@@ -119,7 +120,7 @@ export function VeiculoFormModal({ visible, veiculo, onClose, onSalvo }: Props) 
               <Button label="Cancelar" variant="secondary" onPress={onClose} disabled={salvando} />
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoid>
       </View>
     </Modal>
   );

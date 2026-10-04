@@ -7,6 +7,7 @@ import { Button } from "./Button";
 import { Card } from "./Card";
 import { StarRating } from "./StarRating";
 import { colors, radius, spacing } from "../theme/tokens";
+import { KeyboardAvoid } from "./KeyboardAvoid";
 
 const CHAVE_DISPENSADAS = "lavajato_app_avaliacoes_dispensadas";
 
@@ -96,7 +97,7 @@ export function PopupAvaliacaoPendente() {
 
   return (
     <Modal visible={!!pendente} transparent animationType="fade" onRequestClose={fechar}>
-      <View style={styles.overlay}>
+      <KeyboardAvoid style={styles.overlay}>
         <Card style={styles.card}>
           <Text style={styles.titulo}>Como foi seu atendimento?</Text>
           {pendente && <Text style={styles.subtitulo}>{pendente.nome}</Text>}
@@ -112,7 +113,7 @@ export function PopupAvaliacaoPendente() {
           <Button label="Enviar avaliação" onPress={enviar} loading={enviando} disabled={nota === 0} />
           <Button label="Agora não" onPress={fechar} variant="secondary" />
         </Card>
-      </View>
+      </KeyboardAvoid>
     </Modal>
   );
 }

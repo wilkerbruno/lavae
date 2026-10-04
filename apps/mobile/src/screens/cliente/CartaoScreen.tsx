@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +19,7 @@ import {
   nomeBandeiraExibicao,
   tokenizarCartao,
 } from "../../payments/cartaoNativo";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Cartao">;
 
@@ -342,7 +343,7 @@ export function CartaoScreen({ route, navigation }: Props) {
           DeviceIdCollector (WebView oculta no nativo, injeção direta de
           script no Expo Web). */}
       <DeviceIdCollector onDeviceId={aoReceberDeviceId} />
-      <KeyboardAvoidingView
+      <KeyboardAvoid
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
@@ -514,7 +515,7 @@ export function CartaoScreen({ route, navigation }: Props) {
             disabled={carregandoChave || !publicKey}
           />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }
@@ -523,7 +524,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   // paddingBottom bem maior que o normal (não só spacing.xxl) de propósito:
   // reserva espaço extra pro botão "Pagar agora" conseguir ser rolado pra
-  // cima do teclado mesmo em telas/Android onde o KeyboardAvoidingView
+  // cima do teclado mesmo em telas/Android onde o KeyboardAvoid
   // (behavior "height") não encolhe a área visível direito — ver
   // app.json > android.softwareKeyboardLayoutMode, que é a correção
   // definitiva disso (mas só vale a partir do próximo build nativo).

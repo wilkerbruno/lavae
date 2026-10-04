@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { api } from "../../api/client";
@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { PasswordInput } from "../../components/PasswordInput";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { AuthStackParamList } from "../../navigation/AuthNavigator";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
@@ -35,7 +36,7 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <KeyboardAvoid
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
@@ -83,7 +84,7 @@ export function LoginScreen({ navigation }: Props) {
             É dono de lava jato? Cadastre seu lava jato
           </Text>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

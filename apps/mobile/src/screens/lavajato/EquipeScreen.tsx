@@ -13,6 +13,7 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { ENDERECO_VAZIO, EnderecoForm, enderecoParaApi, enderecoValido } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { MaisStackParamList } from "../../navigation/MaisStack";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<MaisStackParamList, "Equipe">;
 
@@ -142,6 +143,7 @@ export function EquipeScreen({ navigation }: Props) {
     limite == null ? `${ativos} funcionário${ativos === 1 ? "" : "s"} (plano ilimitado)` : `${ativos} de ${limite} funcionários do plano ${assinatura?.plano.nome ?? ""}`;
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View>
@@ -151,7 +153,7 @@ export function EquipeScreen({ navigation }: Props) {
         {!formAberto && <Text style={styles.addButton} onPress={abrirNovo}>+ Novo</Text>}
       </View>
 
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={funcionarios}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -285,6 +287,7 @@ export function EquipeScreen({ navigation }: Props) {
         )}
       />
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

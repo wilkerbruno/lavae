@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { PasswordInput } from "../../components/PasswordInput";
 import { ENDERECO_VAZIO, EnderecoForm, enderecoParaApi, enderecoValido } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 export function RegistrarClienteScreen() {
   const [nome, setNome] = useState("");
@@ -47,7 +48,7 @@ export function RegistrarClienteScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <KeyboardAvoid
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
@@ -95,7 +96,7 @@ export function RegistrarClienteScreen() {
 
           <Button label="Criar conta" onPress={handleRegistrar} loading={carregando} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

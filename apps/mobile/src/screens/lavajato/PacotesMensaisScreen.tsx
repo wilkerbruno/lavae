@@ -10,6 +10,7 @@ import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 const PACOTE_VAZIO = { nome: "", precoReais: "", vezesPorSemana: "1", descricao: "" };
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -121,6 +122,7 @@ export function PacotesMensaisScreen() {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Pacotes mensais</Text>
@@ -131,7 +133,7 @@ export function PacotesMensaisScreen() {
         )}
       </View>
 
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={pacotes}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -246,6 +248,7 @@ export function PacotesMensaisScreen() {
         )}
       />
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

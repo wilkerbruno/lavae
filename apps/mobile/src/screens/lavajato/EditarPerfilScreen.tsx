@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { LavaJato } from "@lavajato-app/shared";
@@ -9,6 +9,7 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { ENDERECO_VAZIO, EnderecoForm, enderecoParaApi, enderecoValido } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 // Tela "Mais > Editar perfil" do dono — edita tanto os próprios dados
 // pessoais (nome, e-mail, telefone — PATCH /usuarios/me) quanto os dados da
@@ -99,7 +100,7 @@ export function EditarPerfilScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoid style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.secaoTitulo}>Seus dados</Text>
           <Card style={{ gap: spacing.md }}>
@@ -158,7 +159,7 @@ export function EditarPerfilScreen() {
 
           <Button label="Salvar alterações" onPress={salvar} loading={salvando} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

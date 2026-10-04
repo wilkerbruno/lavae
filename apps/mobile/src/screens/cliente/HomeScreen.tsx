@@ -11,6 +11,7 @@ import { Card } from "../../components/Card";
 import { StarRating } from "../../components/StarRating";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { HomeStackParamList } from "../../navigation/HomeStack";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<HomeStackParamList, "Home">;
 type Estado = "carregando" | "sem-permissao" | "erro" | "pronto";
@@ -90,6 +91,7 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -115,7 +117,7 @@ export function HomeScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={lavaJatos}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -154,6 +156,7 @@ export function HomeScreen({ navigation }: Props) {
         )}
       />
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

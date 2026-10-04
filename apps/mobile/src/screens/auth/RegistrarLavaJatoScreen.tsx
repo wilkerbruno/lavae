@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,6 +12,7 @@ import { PasswordInput } from "../../components/PasswordInput";
 import { ENDERECO_VAZIO, EnderecoForm, enderecoParaApi, enderecoValido } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
 import { anexarArquivo } from "../../utils/anexarArquivo";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 // Onboarding de uma novo lava jato assinante do SaaS, pelo próprio app:
 // cria o tenant + o usuário dono (LAVAJATO_ADMIN) num plano em TRIAL, e
@@ -111,7 +112,7 @@ export function RegistrarLavaJatoScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <KeyboardAvoid
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
@@ -202,7 +203,7 @@ export function RegistrarLavaJatoScreen() {
 
           <Button label="Criar conta do lava jato" onPress={handleRegistrar} loading={carregando} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }

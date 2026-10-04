@@ -9,6 +9,7 @@ import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 const SERVICO_VAZIO = { nome: "", duracaoMinutos: "30", precoReais: "", descricao: "" };
 
@@ -93,13 +94,14 @@ export function ServicosScreen() {
   }
 
   return (
+    <KeyboardAvoid>
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Serviços</Text>
         {!formAberto && <Text style={styles.addButton} onPress={abrirNovo}>+ Novo</Text>}
       </View>
 
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={servicos}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -174,6 +176,7 @@ export function ServicosScreen() {
         )}
       />
     </SafeAreaView>
+    </KeyboardAvoid>
   );
 }
 

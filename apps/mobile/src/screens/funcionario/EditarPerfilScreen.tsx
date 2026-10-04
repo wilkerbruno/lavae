@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/Button";
 import { EnderecoForm, enderecoParaApi, enderecoValido, EnderecoValores } from "../../components/EnderecoForm";
 import { colors, radius, spacing } from "../../theme/tokens";
+import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 // Tela "Perfil > Editar perfil" do funcionário — nome e e-mail apenas. O
 // telefone fica de fora de propósito: é cadastrado e só pode ser alterado
@@ -55,7 +56,7 @@ export function EditarPerfilScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoid style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.field}>
             <Text style={styles.label}>Nome</Text>
@@ -86,7 +87,7 @@ export function EditarPerfilScreen() {
 
           <Button label="Salvar alterações" onPress={salvar} loading={salvando} />
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoid>
     </SafeAreaView>
   );
 }
