@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterClienteDto } from "./dto/register-cliente.dto";
 import { RegisterLavaJatoDto } from "./dto/register-lavajato.dto";
+import { EsqueciSenhaDto, RedefinirSenhaDto, VerificarCodigoDto } from "./dto/redefinir-senha.dto";
 import { Public } from "../common/decorators/public.decorator";
 import { COOKIE_TOKEN } from "./jwt.strategy";
 
@@ -54,6 +55,26 @@ export class AuthController {
     const resultado = await this.authService.registerLavaJato(dto);
     setarCookieToken(res, resultado.accessToken);
     return resultado;
+  }
+
+  // Esqueci minha senha: 1) pede o código por e-mail, 2) confere o código
+  // (devolve um token curto), 3) grava a nova senha com esse token.
+  @Public()
+  @Post("esqueci-senha")
+  esqueciSenha(@Body() dto: EsqueciSenhaDto) {
+    return this.authService.esqueciSenha(dto.email);
+  }
+
+  @Public()
+  @Post("verificar-codigo")
+  verificarCodigo(@Body() dto: VerificarCodigoDto) {
+    return this.authService.verificarCodigo(dto.email, dto.codigo);
+  }
+
+  @Public()
+  @Post("redefinir-senha")
+  redefinirSenha(@Body() dto: RedefinirSenhaDto) {
+    return this.authService.redefinirSenha(dto.token, dto.novaSenha, dto.confirmarSenha);
   }
 
   // Só a versão web usa isso (ver authStore.ts "logout" web) — o

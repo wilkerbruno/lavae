@@ -12,7 +12,7 @@ import { KeyboardAvoid } from "../../components/KeyboardAvoid";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen({ navigation, route }: Props) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -71,6 +71,11 @@ export function LoginScreen({ navigation }: Props) {
             />
           </View>
 
+          <Text style={styles.esqueci} onPress={() => navigation.navigate("EsqueciSenha")}>
+            Esqueci minha senha
+          </Text>
+
+          {route.params?.senhaRedefinida && <Text style={styles.sucesso}>Senha alterada! Entre com a nova senha.</Text>}
           {erro && <Text style={styles.erro}>{erro}</Text>}
 
           <Button label="Entrar" onPress={handleLogin} loading={carregando} />
@@ -106,6 +111,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
+  esqueci: { alignSelf: "flex-end", fontSize: 13, color: colors.accent, fontWeight: "600" },
+  sucesso: { color: colors.accent, fontSize: 13, fontWeight: "600" },
   erro: { color: colors.danger, fontSize: 13 },
   linkLavaJato: { textAlign: "center", fontSize: 13, color: colors.accent, fontWeight: "600", marginTop: spacing.sm },
 });

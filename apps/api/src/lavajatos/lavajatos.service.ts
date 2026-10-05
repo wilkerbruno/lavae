@@ -1,3 +1,4 @@
+import { GeocodingService } from "../common/servicos/geocoding.service";
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import sharp from "sharp";
 import { StatusAgendamento } from "@lavajato-app/shared";
@@ -62,6 +63,7 @@ export class LavaJatosService {
     private prisma: PrismaService,
     private mercadoPago: MercadoPagoService,
     private configuracoes: ConfiguracoesService,
+    private geocoding: GeocodingService,
   ) {}
 
   // O Mercado Pago nem sempre devolve a public_key da conta conectada no
@@ -105,18 +107,29 @@ export class LavaJatosService {
     return this.comChavePublicaResolvida(lavaJato);
   }
 
-  atualizar(id: string, dto: UpdateLavaJatoDto) {
+  async atualizar(id: string, dto: UpdateLavaJatoDto) {
     const { endereco, ajustePrecoPorte, ajusteDuracaoPorte, ...resto } = dto;
-    return this.prisma.lavaJato.update({
+    const capturouGps = resto.latitude != null && resto.longitude != null;
+    const atualizado = await this.prisma.lavaJato.update({
       where: { id },
       data: {
         ...resto,
+        // GPS capturado pelo dono vale mais que o do endereço e nunca é sobrescrito.
+        ...(capturouGps ? { coordenadasAuto: false } : {}),
         ...(endereco ? camposEndereco(endereco) : {}),
         // Json do Prisma não aceita a classe do DTO direto — copia pra objeto simples.
         ...(ajustePrecoPorte ? { ajustePrecoPorte: { ...ajustePrecoPorte } } : {}),
         ...(ajusteDuracaoPorte ? { ajusteDuracaoPorte: { ...ajusteDuracaoPorte } } : {}),
       },
     });
+    // Endereço mudou: recalcula só se as coordenadas atuais vieram do endereço.
+    if (endereco && !capturouGps) {
+      if (atualizado.coordenadasAuto) {
+        await this.prisma.lavaJato.update({ where: { id }, data: { latitude: null, longitude: null, geocodeTentadoEm: null } });
+      }
+      void this.geocoding.preencherLavaJato(id);
+    }
+    return atualizado;
   }
 
   // Recebe o arquivo de logo enviado pelo dono (registro do lava jato ou
@@ -169,6 +182,9 @@ export class LavaJatosService {
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
       throw new BadRequestException("Informe latitude e longitude válidas.");
     }
+
+    // Quem ainda está sem coordenadas é posicionado pelo endereço (em segundo plano).
+    void this.geocoding.preencherPendentes();
 
     const [candidatas, agendamentosDoCliente, { horasCarenciaAposVencimento }] = await Promise.all([
       this.prisma.lavaJato.findMany({

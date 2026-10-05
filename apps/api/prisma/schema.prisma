@@ -146,6 +146,13 @@ model LavaJato {
   // Preenchidas pelo dono em "Mais > Localização" (captura o GPS do celular dele).
   latitude  Float?
   longitude Float?
+  // true quando latitude/longitude vieram do ENDEREÇO (geocodificação
+  // automática) e não do GPS capturado pelo dono em Mais > Localização.
+  // Só coordenadas automáticas são recalculadas quando o endereço muda; as
+  // capturadas pelo dono nunca são sobrescritas. geocodeTentadoEm evita
+  // insistir todo dia num endereço que o serviço de mapas não achou.
+  coordenadasAuto  Boolean   @default(false)
+  geocodeTentadoEm DateTime?
   // Cache da avaliação média (1 a 5) e da quantidade de avaliações, recalculado
   // toda vez que um cliente avalia (ver AvaliacoesService/LavaJatosService).
   // Evita ter que agregar a tabela Avaliacao a cada listagem.
@@ -257,7 +264,28 @@ model Usuario {
   cartoesSalvos CartaoSalvo[]
   clientesMercadoPago ClienteMercadoPagoCustomer[]
 
+  // Códigos de "esqueci minha senha" (ver RedefinicaoSenha e AuthService).
+  redefinicoesSenha RedefinicaoSenha[]
+
   @@index([lavaJatoId])
+}
+
+// Código de 6 dígitos enviado por e-mail no fluxo "esqueci minha senha".
+// Só o HASH do código é guardado. Expira em poucos minutos, tem limite de
+// tentativas e só vale uma vez (usadoEm). Depois de digitar o código certo
+// (verificadoEm), o app recebe um token curto pra definir a nova senha.
+model RedefinicaoSenha {
+  id           String    @id @default(uuid())
+  usuarioId    String
+  codigoHash   String
+  expiraEm     DateTime
+  tentativas   Int       @default(0)
+  verificadoEm DateTime?
+  usadoEm      DateTime?
+  criadoEm     DateTime  @default(now())
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 // Veículo de um cliente. A placa é única por cliente (o mesmo carro pode ser

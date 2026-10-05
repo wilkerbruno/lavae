@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { APP_GUARD } from "@nestjs/core";
+import { ServicosComunsModule } from "./common/servicos/servicos-comuns.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { LavaJatosModule } from "./lavajatos/lavajatos.module";
@@ -28,6 +29,7 @@ import { AssinaturaGuard } from "./common/guards/assinatura.guard";
     // verificarAvisosDeVencimento (aviso de assinatura vencendo em 3 dias).
     ScheduleModule.forRoot(),
     PrismaModule,
+    ServicosComunsModule,
     AuthModule,
     LavaJatosModule,
     ServicosModule,

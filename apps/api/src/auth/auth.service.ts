@@ -1,12 +1,15 @@
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
+import { createHmac, randomInt, timingSafeEqual } from "crypto";
 import { Papel, StatusAssinatura } from "@lavajato-app/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { ConfiguracoesService } from "../configuracoes/configuracoes.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterClienteDto } from "./dto/register-cliente.dto";
 import { RegisterLavaJatoDto } from "./dto/register-lavajato.dto";
+import { MailService } from "../common/servicos/mail.service";
+import { GeocodingService } from "../common/servicos/geocoding.service";
 import { camposEndereco } from "../common/endereco.util";
 
 function slugify(texto: string): string {
@@ -18,12 +21,16 @@ function slugify(texto: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+const MINUTOS_CODIGO = 15;
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private configuracoes: ConfiguracoesService,
+    private mail: MailService,
+    private geocoding: GeocodingService,
   ) {}
 
   private async assinarToken(usuario: { id: string; papel: Papel; lavaJatoId: string | null }) {
@@ -124,11 +131,88 @@ export class AuthService {
       return { lavaJato, dono };
     });
 
+    // Põe o lava jato no mapa pelo endereço cadastrado (em segundo plano).
+    void this.geocoding.preencherLavaJato(resultado.lavaJato.id);
+
     const { senhaHash: _, ...usuarioSemSenha } = resultado.dono;
     return {
       lavaJato: resultado.lavaJato,
       usuario: usuarioSemSenha,
       ...(await this.assinarToken(resultado.dono)),
     };
+  }
+
+  // ---------- Esqueci minha senha ----------
+  private hashCodigo(id: string, codigo: string) {
+    return createHmac("sha256", process.env.JWT_SECRET ?? "lavae").update(`${id}:${codigo}`).digest("hex");
+  }
+
+  // Sempre responde igual (exista o e-mail ou não) para não revelar quem tem conta.
+  async esqueciSenha(emailBruto: string) {
+    const email = emailBruto.trim().toLowerCase();
+    const resposta = { ok: true, mensagem: "Se o e-mail estiver cadastrado, enviamos um código de 6 dígitos." };
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    if (!usuario) return resposta;
+
+    const recente = await this.prisma.redefinicaoSenha.findFirst({
+      where: { usuarioId: usuario.id, criadoEm: { gt: new Date(Date.now() - 60_000) } },
+    });
+    if (recente) return resposta; // espera 60s entre pedidos
+
+    await this.prisma.redefinicaoSenha.updateMany({
+      where: { usuarioId: usuario.id, usadoEm: null },
+      data: { usadoEm: new Date() },
+    });
+    const codigo = String(randomInt(0, 1_000_000)).padStart(6, "0");
+    const registro = await this.prisma.redefinicaoSenha.create({
+      data: { usuarioId: usuario.id, codigoHash: "", expiraEm: new Date(Date.now() + MINUTOS_CODIGO * 60_000) },
+    });
+    await this.prisma.redefinicaoSenha.update({ where: { id: registro.id }, data: { codigoHash: this.hashCodigo(registro.id, codigo) } });
+    await this.mail.enviarCodigoRedefinicao(usuario.email, usuario.nome, codigo, MINUTOS_CODIGO);
+    return resposta;
+  }
+
+  async verificarCodigo(emailBruto: string, codigo: string) {
+    const invalido = new BadRequestException("Código inválido ou expirado.");
+    const usuario = await this.prisma.usuario.findUnique({ where: { email: emailBruto.trim().toLowerCase() } });
+    if (!usuario) throw invalido;
+    const registro = await this.prisma.redefinicaoSenha.findFirst({
+      where: { usuarioId: usuario.id, usadoEm: null, expiraEm: { gt: new Date() } },
+      orderBy: { criadoEm: "desc" },
+    });
+    if (!registro || registro.tentativas >= 5) throw invalido;
+
+    const esperado = Buffer.from(registro.codigoHash);
+    const recebido = Buffer.from(this.hashCodigo(registro.id, codigo));
+    const confere = esperado.length === recebido.length && timingSafeEqual(esperado, recebido);
+    if (!confere) {
+      await this.prisma.redefinicaoSenha.update({ where: { id: registro.id }, data: { tentativas: { increment: 1 } } });
+      throw invalido;
+    }
+    await this.prisma.redefinicaoSenha.update({ where: { id: registro.id }, data: { verificadoEm: new Date() } });
+    const token = await this.jwt.signAsync({ sub: usuario.id, purpose: "reset", rid: registro.id }, { expiresIn: "10m" });
+    return { ok: true, token };
+  }
+
+  async redefinirSenha(token: string, novaSenha: string, confirmarSenha: string) {
+    if (novaSenha.length < 8) throw new BadRequestException("A nova senha deve ter no mínimo 8 caracteres.");
+    if (novaSenha !== confirmarSenha) throw new BadRequestException("As senhas não conferem.");
+    let payload: { sub: string; purpose?: string; rid?: string };
+    try {
+      payload = await this.jwt.verifyAsync(token);
+    } catch {
+      throw new BadRequestException("Sessão de redefinição expirada. Peça um novo código.");
+    }
+    if (payload.purpose !== "reset" || !payload.rid) throw new BadRequestException("Token inválido.");
+    const registro = await this.prisma.redefinicaoSenha.findUnique({ where: { id: payload.rid } });
+    if (!registro || registro.usuarioId !== payload.sub || registro.usadoEm || !registro.verificadoEm) {
+      throw new BadRequestException("Sessão de redefinição inválida. Peça um novo código.");
+    }
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    await this.prisma.$transaction([
+      this.prisma.usuario.update({ where: { id: payload.sub }, data: { senhaHash } }),
+      this.prisma.redefinicaoSenha.updateMany({ where: { usuarioId: payload.sub, usadoEm: null }, data: { usadoEm: new Date() } }),
+    ]);
+    return { ok: true };
   }
 }
