@@ -22,6 +22,7 @@ export function MaisScreen({ navigation }: Props) {
     { label: "Localização", onPress: () => navigation.navigate("Localizacao") },
 
     { label: "Logo do lava jato", onPress: () => navigation.navigate("Logo") },
+    { label: "QR Code para imprimir", onPress: () => navigation.navigate("QrCode") },
     { label: "Mercado Pago", onPress: () => navigation.navigate("MercadoPago") },
     { label: "Assinatura do plano", onPress: () => navigation.navigate("Assinatura") },
     { label: "Suporte", onPress: () => navigation.navigate("Suporte") },

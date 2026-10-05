@@ -13,6 +13,7 @@ import { AssinaturaPagamentoScreen } from "../screens/lavajato/AssinaturaPagamen
 import { AssinaturaPagamentoPendenteScreen } from "../screens/lavajato/AssinaturaPagamentoPendenteScreen";
 import { LocalizacaoScreen } from "../screens/lavajato/LocalizacaoScreen";
 import { LogoScreen } from "../screens/lavajato/LogoScreen";
+import { QrCodeScreen } from "../screens/lavajato/QrCodeScreen";
 import { ConectarMercadoPagoScreen } from "../screens/lavajato/ConectarMercadoPagoScreen";
 import { EditarPerfilScreen } from "../screens/lavajato/EditarPerfilScreen";
 
@@ -38,6 +39,8 @@ export type MaisStackParamList = {
   AssinaturaPagamentoPendente: { pagamento: PagamentoAssinatura };
   Localizacao: undefined;
   Logo: undefined;
+  // Cartaz com QR Code pra imprimir e deixar no lava jato (ver QrCodeScreen).
+  QrCode: undefined;
   MercadoPago: undefined;
   EditarPerfil: undefined;
 
@@ -77,6 +80,7 @@ export function MaisStackNavigator() {
       />
       <Stack.Screen name="Localizacao" component={LocalizacaoScreen} options={{ headerShown: true, title: "Localização" }} />
       <Stack.Screen name="Logo" component={LogoScreen} options={{ headerShown: true, title: "Logo do lava jato" }} />
+      <Stack.Screen name="QrCode" component={QrCodeScreen} options={{ headerShown: true, title: "QR Code para imprimir" }} />
       <Stack.Screen name="MercadoPago" component={ConectarMercadoPagoScreen} options={{ headerShown: true, title: "Mercado Pago" }} />
       <Stack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ headerShown: true, title: "Editar perfil" }} />
 
