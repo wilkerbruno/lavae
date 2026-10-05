@@ -9,8 +9,8 @@ import { alertar } from "../../utils/alertaCompat";
 import { colors, spacing } from "../../theme/tokens";
 
 // Imagem estática (não desenhada na hora): o conteúdo é sempre o mesmo —
-// aponta pra lavae.store, onde o cliente baixa o app ou agenda pelo
-// navegador. Se um dia existir um link direto por lava jato, esse QR Code
+// aponta pra app.lavae.store (versão web do cliente), onde ele agenda
+// direto pelo navegador, sem instalar nada. Se um dia existir um link direto por lava jato, esse QR Code
 // passa a ser gerado dinamicamente em vez de usar esse arquivo fixo.
 const QRCODE_ASSET = require("../../../assets/qrcode-agendamento.png");
 // Proporção real do arquivo (1200x1600) — usada pra calcular a altura certa a
@@ -68,8 +68,8 @@ export function QrCodeScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.hint}>
-          Baixe ou compartilhe esse cartaz e deixe impresso no balcão — seus clientes escaneiam e caem direto no
-          lavaê para agendar.
+          Baixe ou compartilhe esse cartaz e deixe impresso no balcão — seus clientes escaneiam e caem direto na
+          tela de agendamento.
         </Text>
         <Card style={[styles.cardImagem, { padding: paddingCard }]}>
           <Image
