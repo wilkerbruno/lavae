@@ -12,6 +12,8 @@ import * as tls from "tls";
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
+  constructor(private config: ConfigService) {}
+
   get configurado(): boolean {
     return !!this.config.get<string>("SMTP_HOST") && !!this.config.get<string>("SMTP_USER") && !!this.config.get<string>("SMTP_PASS");
   }
