@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { api } from "../../api/client";
+import { api, mensagemErroApi } from "../../api/client";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/Button";
 import { PasswordInput } from "../../components/PasswordInput";
@@ -28,7 +28,7 @@ export function LoginScreen({ navigation, route }: Props) {
       // Não precisa navegar manualmente: o RootNavigator troca de stack
       // sozinho assim que `usuario` muda no authStore.
     } catch (e: any) {
-      setErro(e?.response?.data?.message ?? "Não foi possível entrar. Confira seus dados.");
+      setErro(mensagemErroApi(e, "Não foi possível entrar. Confira seus dados."));
     } finally {
       setCarregando(false);
     }
