@@ -5,7 +5,11 @@ import { useAuthStore } from "../store/authStore";
 // Em desenvolvimento com o Expo Go num celular físico, troque "localhost" pelo
 // IP da sua máquina na rede local (ex: http://192.168.0.10:3000/api).
 // No emulador Android, "localhost" não chega no host — use 10.0.2.2.
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000/api";
+// Em produção, o `eas update` NÃO lê o `env` do eas.json (isso só vale no
+// `eas build`) — sem esse fallback, uma atualização OTA saía apontando pra
+// localhost e o login falhava com "sem resposta". Por isso o padrão de
+// produção é a API do lavaê; só o modo dev cai no localhost.
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? "http://localhost:3000/api" : "https://api.lavae.store/api");
 
 // `withCredentials` faz o navegador mandar/aceitar o cookie httpOnly de
 // sessão (ver authStore.ts e API: auth/jwt.strategy.ts) — só existe no Web;
